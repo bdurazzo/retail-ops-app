@@ -1,0 +1,19 @@
+{
+  "labels": [
+    "Week 1",
+    "Week 2",
+    "Week 3",
+    "Week 4"
+  ],
+  "datasets": [
+    {
+      "label": "Example Metric",
+      "data": [
+        20,
+        35,
+        50,
+        40
+      ]
+    }
+  ]
+}
