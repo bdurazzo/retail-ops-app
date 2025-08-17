@@ -1,46 +1,21 @@
+// --------------------------------------------------
+// AnalyticsChart.jsx – Static chart placeholder
+// --------------------------------------------------
+
 import React from "react";
-import { Bar } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend,
-} from "chart.js";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
-
-export default function AnalyticsChart({ config }) {
-  const chartConfig = {
-    data: {
-      labels: config?.labels || [],
-      datasets: config?.datasets || [],
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: "top" },
-      },
-      scales: {
-        x: {
-          ticks: {
-            font: { size: 10 },
-          },
-        },
-        y: {
-          ticks: {
-            font: { size: 10 },
-          },
-        },
-      },
-    },
-  };
-
+export default function AnalyticsChart() {
   return (
-    <div className="h-[280px] w-full bg-white rounded-xl shadow p-4">
-      <Bar {...chartConfig} />
+    <div className="h-64 w-full bg-gray-100 border border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500">
+      {/* 
+        h-64               → fixed height (16rem)
+        w-full             → full width
+        bg-gray-100        → light background
+        border-dashed      → dashed border for placeholder feel
+        flex items-center justify-center → center the text
+        text-gray-500      → muted placeholder text color
+      */}
+      [Chart goes here]
     </div>
   );
 }

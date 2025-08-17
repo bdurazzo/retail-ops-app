@@ -1,137 +1,157 @@
-// src/features/analytics/components/TabDropPanel.jsx
+// ------------------------------------------------------------------
+// TabDropPanel.jsx – Visual drop-down panel layer with animation and outside click handling
+// ------------------------------------------------------------------
 
-import React, { useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import "./TabDropPanel.css"; // create this for styling if needed
+import {
+  ChevronDownIcon,
+  ChevronRightIcon
+} from "@heroicons/react/20/solid";
 
-export default function TabDropPanel({ isOpen, onClose, filters, setFilters, applyFilters }) {
-  const backdropRef = useRef();
+// 🔧 Import centralized tag registry and logic registry
+import { filterTagRegistry } from "./filters/filterTagRegistry";
+import { filterLogicRegistry } from "./filters/filterLogicRegistry";
 
-  const handleClickOutside = (e) => {
-    if (backdropRef.current && e.target === backdropRef.current) {
+export default function TabDropPanel({ isOpen, onClose, activeTab }) {
+  const panelRef = useRef();
+
+  // --------------------------------------
+  // State setup for all filter sections
+  // --------------------------------------
+  const [filterStates, setFilterStates] = useState(
+    Object.keys(filterTagRegistry).reduce((acc, key) => {
+      acc[key] = filterTagRegistry[key].map(tag => ({ ...tag, selected: false }));
+      return acc;
+    }, {})
+  );
+
+  const [sectionVisibility, setSectionVisibility] = useState(
+    Object.keys(filterTagRegistry).reduce((acc, key) => {
+      acc[key] = false;
+      return acc;
+    }, {})
+  );
+
+  const [resetFlag, setResetFlag] = useState(false);
+
+  const handleToggleTag = (sectionKey, tagValue) => {
+    const handler = filterLogicRegistry[sectionKey];
+    const currentTags = filterStates[sectionKey];
+    if (!handler) return;
+
+    const updated = handler(tagValue, () => {}, currentTags);
+    setFilterStates(prev => ({ ...prev, [sectionKey]: updated }));
+  };
+
+  const resetAllTags = () => {
+    const resetState = Object.keys(filterTagRegistry).reduce((acc, key) => {
+      acc[key] = filterTagRegistry[key].map(tag => ({ ...tag, selected: false }));
+      return acc;
+    }, {});
+    setFilterStates(resetState);
+    setResetFlag(prev => !prev);
+  };
+
+  const handleClickOutside = (event) => {
+    if (panelRef.current && !panelRef.current.contains(event.target)) {
       onClose();
     }
   };
 
   useEffect(() => {
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
-  const handleReset = () => {
-    setFilters({
-      priceFloor: "",
-      category: "",
-      timeRange: "",
-    });
-  };
-
-  const handleApply = () => {
-    applyFilters();
-    onClose();
-  };
+  const FilterSection = ({ title, show, toggleShow, children }) => (
+    <div className="border-t border-gray-200 pt-2">
+      <div
+        className="flex items-center justify-between cursor-pointer px-1 py-1"
+        onClick={toggleShow}
+      >
+        <h3 className="text-sm font-medium text-gray-700">{title}</h3>
+        <div className="w-5 h-5 bg-gray-200 rounded flex items-center justify-center">
+          {show ? (
+            <ChevronDownIcon className="w-4 h-4 text-gray-700" />
+          ) : (
+            <ChevronRightIcon className="w-4 h-4 text-gray-700" />
+          )}
+        </div>
+      </div>
+      {show && <div className="mt-3">{children}</div>}
+    </div>
+  );
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* BACKDROP */}
+    <div className="relative w-full">
+      <AnimatePresence mode="wait">
+        {isOpen && (
           <motion.div
-            className="fixed inset-0 bg-gray-800 bg-opacity-40 z-40"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            ref={backdropRef}
-          />
-
-          {/* PANEL */}
-          <motion.div
-            className="absolute left-0 right-0 mx-auto bg-white z-50 shadow-lg rounded-b-lg max-w-screen-md"
-            initial={{ y: -200, opacity: 0 }}
-            animate={{ y: 0, opacity: 1, transition: { duration: 0.25 } }}
-            exit={{ y: -200, opacity: 0, transition: { duration: 0.2 } }}
-            style={{ top: "52px" }} // drop from just beneath chart tab bar
+            ref={panelRef}
+            key="dropdown-panel"
+            className="absolute left-0 top-full w-full rounded-md bg-white shadow-lg border border-gray-200 z-[99]"
+            initial={{ opacity: 1, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0, transitionEnd: { display: "none" } }}
+            transition={{
+              opacity: { duration: 0.25, ease: "easeOut" },
+              height: { duration: 0.25, ease: "easeInOut" },
+            }}
+            style={{ overflow: "hidden" }}
           >
-            {/* HEADER */}
-            <div className="flex justify-between items-center px-4 py-2 border-b">
-              <h3 className="text-sm font-semibold uppercase">Filter Options</h3>
-              <button className="text-gray-500 hover:text-black" onClick={onClose}>
-                ✕
-              </button>
+            {/* Sticky Header */}
+            <div className="border-b border-gray-200 px-4 py-2 bg-white sticky top-0 z-10">
+              <div className="text-sm font-semibold text-gray-800">{`${activeTab} Filter Panel`}</div>
             </div>
 
-            {/* FILTER SECTIONS */}
-            <div className="p-4 space-y-4 max-h-[50vh] overflow-y-auto">
-              {/* Price Floor */}
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Minimum Price ($)</label>
-                <input
-                  type="number"
-                  value={filters.priceFloor}
-                  onChange={(e) => setFilters((prev) => ({ ...prev, priceFloor: e.target.value }))}
-                  className="w-full border rounded px-2 py-1 text-sm"
-                />
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Category</label>
-                <select
-                  value={filters.category}
-                  onChange={(e) => setFilters((prev) => ({ ...prev, category: e.target.value }))}
-                  className="w-full border rounded px-2 py-1 text-sm"
-                >
-                  <option value="">All</option>
-                  <option value="Shirts">Shirts</option>
-                  <option value="Pants">Pants</option>
-                  <option value="Outerwear">Outerwear</option>
-                  <option value="Accessories">Accessories</option>
-                </select>
-              </div>
-
-              {/* Time Range */}
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Time Range</label>
-                <select
-                  value={filters.timeRange}
-                  onChange={(e) => setFilters((prev) => ({ ...prev, timeRange: e.target.value }))}
-                  className="w-full border rounded px-2 py-1 text-sm"
-                >
-                  <option value="">All</option>
-                  <option value="2023Q4">2023Q4</option>
-                  <option value="2024Q1">2024Q1</option>
-                  <option value="2024Q2">2024Q2</option>
-                  <option value="2025Q1">2025Q1</option>
-                  <option value="2025Q2">2025Q2</option>
-                </select>
+            <div className="max-h-[300px] overflow-y-auto px-4 py-6 space-y-4">
+              <div className="text-sm text-gray-600 font-semibold">Filters</div>
+              <div className="flex flex-col gap-3">
+                {Object.entries(filterTagRegistry).map(([key, tags]) => (
+                  <FilterSection
+                    key={key}
+                    title={key.replace(/([A-Z])/g, " $1").replace(/^./, str => str.toUpperCase())}
+                    show={sectionVisibility[key]}
+                    toggleShow={() =>
+                      setSectionVisibility(prev => ({ ...prev, [key]: !prev[key] }))
+                    }
+                  >
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {filterStates[key].map((tag) => (
+                        <button
+                          key={tag.label}
+                          onClick={() => handleToggleTag(key, tag.value)}
+                          className={`px-2 py-1 text-xs rounded transition ${
+                            tag.selected
+                              ? "bg-gray-900 text-white hover:bg-gray-800"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          }`}
+                        >
+                          {tag.label}
+                        </button>
+                      ))}
+                    </div>
+                  </FilterSection>
+                ))}
               </div>
             </div>
 
-            {/* ACTIONS */}
-            <div className="flex justify-between items-center p-4 border-t sticky bottom-0 bg-white">
+            {/* Sticky footer */}
+            <div className="border-t border-gray-200 px-4 py-2 flex justify-end bg-white sticky bottom-0">
               <button
-                className="text-sm px-3 py-1 border rounded text-gray-600 hover:text-black"
-                onClick={handleReset}
+                className="text-sm text-gray-500 hover:text-gray-700 mr-4"
+                onClick={resetAllTags}
               >
                 Reset
               </button>
-              <button
-                className="text-sm px-4 py-1 bg-black text-white rounded hover:bg-gray-800"
-                onClick={handleApply}
-              >
+              <button className="bg-gray-900 text-white px-3 py-1 text-sm rounded-md hover:bg-gray-800">
                 Apply
               </button>
             </div>
           </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

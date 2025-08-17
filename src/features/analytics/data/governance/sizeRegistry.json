@@ -1,0 +1,46 @@
+[
+  { "raw": "XS",         "norm": "XS",        "system": "alpha",                  "gender": "unisex", "sort": 1,    "notes": "" },
+  { "raw": "S",          "norm": "S",         "system": "alpha",                  "gender": "unisex", "sort": 2,    "notes": "" },
+  { "raw": "M",          "norm": "M",         "system": "alpha",                  "gender": "unisex", "sort": 3,    "notes": "" },
+  { "raw": "L",          "norm": "L",         "system": "alpha",                  "gender": "unisex", "sort": 4,    "notes": "" },
+  { "raw": "XL",         "norm": "XL",        "system": "alpha",                  "gender": "unisex", "sort": 5,    "notes": "" },
+  { "raw": "XXL",        "norm": "XXL",       "system": "alpha",                  "gender": "unisex", "sort": 6,    "notes": "" },
+  { "raw": "2XL",        "norm": "XXL",       "system": "alpha",                  "gender": "unisex", "sort": 6,    "notes": "alias of XXL" },
+  { "raw": "XXXL",       "norm": "XXXL",      "system": "alpha",                  "gender": "unisex", "sort": 7,    "notes": "" },
+  { "raw": "3XL",        "norm": "XXXL",      "system": "alpha",                  "gender": "unisex", "sort": 7,    "notes": "alias of XXXL" },
+
+  { "raw": "LONG",       "norm": "Long",      "system": "length-variant",         "gender": "unisex", "sort": 15,   "notes": "standalone; XL Long etc. treated as distinct sizes later" },
+
+  { "raw": "26",         "norm": "26",        "system": "numeric-waist",          "gender": "mens",   "sort": 126,  "notes": "ascending waist" },
+  { "raw": "28",         "norm": "28",        "system": "numeric-waist",          "gender": "mens",   "sort": 128,  "notes": "" },
+  { "raw": "29",         "norm": "29",        "system": "numeric-waist",          "gender": "mens",   "sort": 129,  "notes": "" },
+  { "raw": "31",         "norm": "31",        "system": "numeric-waist",          "gender": "mens",   "sort": 131,  "notes": "" },
+  { "raw": "32",         "norm": "32",        "system": "numeric-waist",          "gender": "mens",   "sort": 132,  "notes": "" },
+  { "raw": "34",         "norm": "34",        "system": "numeric-waist",          "gender": "mens",   "sort": 134,  "notes": "" },
+  { "raw": "36",         "norm": "36",        "system": "numeric-waist",          "gender": "mens",   "sort": 136,  "notes": "" },
+  { "raw": "38",         "norm": "38",        "system": "numeric-waist",          "gender": "mens",   "sort": 138,  "notes": "" },
+  { "raw": "40",         "norm": "40",        "system": "numeric-waist",          "gender": "mens",   "sort": 140,  "notes": "" },
+  { "raw": "44",         "norm": "44",        "system": "numeric-waist",          "gender": "mens",   "sort": 144,  "notes": "" },
+  { "raw": "50",         "norm": "50",        "system": "numeric-waist",          "gender": "mens",   "sort": 150,  "notes": "" },
+
+  { "raw": "30X32",      "norm": "30x32",     "system": "numeric-waist-inseam",   "gender": "mens",   "sort": 30032, "notes": "ascending waist then inseam" },
+  { "raw": "30X34",      "norm": "30x34",     "system": "numeric-waist-inseam",   "gender": "mens",   "sort": 30034, "notes": "" },
+  { "raw": "32X32",      "norm": "32x32",     "system": "numeric-waist-inseam",   "gender": "mens",   "sort": 32032, "notes": "" },
+  { "raw": "33X32",      "norm": "33x32",     "system": "numeric-waist-inseam",   "gender": "mens",   "sort": 33032, "notes": "" },
+  { "raw": "34X32",      "norm": "34x32",     "system": "numeric-waist-inseam",   "gender": "mens",   "sort": 34032, "notes": "" },
+  { "raw": "34X34",      "norm": "34x34",     "system": "numeric-waist-inseam",   "gender": "mens",   "sort": 34034, "notes": "" },
+  { "raw": "36X30",      "norm": "36x30",     "system": "numeric-waist-inseam",   "gender": "mens",   "sort": 36030, "notes": "" },
+  { "raw": "36X32",      "norm": "36x32",     "system": "numeric-waist-inseam",   "gender": "mens",   "sort": 36032, "notes": "" },
+  { "raw": "36X34",      "norm": "36x34",     "system": "numeric-waist-inseam",   "gender": "mens",   "sort": 36034, "notes": "" },
+  { "raw": "38X32",      "norm": "38x32",     "system": "numeric-waist-inseam",   "gender": "mens",   "sort": 38032, "notes": "" },
+  { "raw": "38X34",      "norm": "38x34",     "system": "numeric-waist-inseam",   "gender": "mens",   "sort": 38034, "notes": "" },
+
+  { "raw": "ONE SIZE",   "norm": "One Size",  "system": "one-size",               "gender": "unisex", "sort": 50,   "notes": "" },
+  { "raw": "OS - BRASS", "norm": "One Size",  "system": "one-size",               "gender": "unisex", "sort": 50,   "notes": "hardware/finish is not size" },
+  { "raw": "OS-BRASS",   "norm": "One Size",  "system": "one-size",               "gender": "unisex", "sort": 50,   "notes": "hardware/finish is not size" },
+
+  { "raw": "1OZ",        "norm": "1 oz",      "system": "pack-volume",            "gender": "unisex", "sort": 200,  "notes": "" },
+
+  { "raw": "CUSTOM",     "norm": "Unspecified", "system": "custom",               "gender": "unisex", "sort": 999,  "notes": "map to Unspecified" },
+  { "raw": "",           "norm": "Unspecified", "system": "unspecified",          "gender": "unisex", "sort": 999,  "notes": "blank → Unspecified" }
+]

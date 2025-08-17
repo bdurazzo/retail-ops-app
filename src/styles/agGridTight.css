@@ -1,0 +1,43 @@
+/* Make single-line rows compact and multi-line rows tighter */
+.ag-theme-quartz {
+  /* Baselines for a single line row/header */
+  --ag-row-height: 50px;           /* down from ~34 */
+  --ag-header-height: 30px;        /* down from ~36 */
+  --ag-font-size: 10px;            /* adjust if you want 11/13 etc. */
+  --ag-header-font-size: 15px;
+}
+
+/* Reduce vertical breathing inside each cell line */
+.ag-theme-quartz .ag-cell,
+.ag-theme-quartz .ag-header-cell {
+    font-size: 11px !important;
+    line-height: 1.8;                /* default feels ~1.4–1.6 */
+}
+
+/* Trim vertical padding added by inner wrappers */
+.ag-theme-quartz .ag-cell-wrapper,
+.ag-theme-quartz .ag-header-cell-label {
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+/* Make the value span itself not add extra padding */
+.ag-theme-quartz .ag-cell-value {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Pinned-left column stays readable but not “tall” */
+.ag-theme-quartz .ag-pinned-left-cols-container .ag-cell {
+  font-weight: 500;
+  background: #fff;
+  line-height: 1.3;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+/* Numeric columns keep aligned digits without extra height */
+.ag-theme-quartz .ag-cell {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}

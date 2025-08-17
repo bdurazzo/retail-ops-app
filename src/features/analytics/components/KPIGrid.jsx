@@ -1,106 +1,42 @@
-import React, { useState } from "react";
+// ---------------------------------------------------
+// KPIGrid.jsx – Static metric block shell
+// ---------------------------------------------------
 
-export default function GeneratedTable({ data }) {
-  const [sortStack, setSortStack] = useState([]);
-  const [sortDirections, setSortDirections] = useState({});
+import React from "react";
 
-  if (!data || data.length === 0) return <div className="text-gray-500">No data available.</div>;
-
-  const headers = Object.keys(data[0]);
-
-  // Normalize numeric values for composite sort
-  const getNormalizedValues = (rows, col) => {
-    const nums = rows.map(row => parseFloat(row[col]) || 0);
-    const min = Math.min(...nums);
-    const max = Math.max(...nums);
-    return nums.map(v => max !== min ? (v - min) / (max - min) : 0.5);
-  };
-
-  const getSortedData = () => {
-    if (sortStack.length === 0) return data;
-
-    const normalized = {};
-    sortStack.forEach(col => {
-      normalized[col] = getNormalizedValues(data, col);
-    });
-
-    return [...data].sort((a, b) => {
-      let scoreA = 0;
-      let scoreB = 0;
-      sortStack.forEach(col => {
-        const idx = data.indexOf(a);
-        const idy = data.indexOf(b);
-        const direction = sortDirections[col] === "asc" ? 1 : -1;
-        scoreA += (normalized[col][idx] || 0) * direction;
-        scoreB += (normalized[col][idy] || 0) * direction;
-      });
-      return scoreB - scoreA;
-    });
-  };
-
-  const handleClick = (col) => {
-    if (sortStack.length === 1 && sortStack[0] === col) {
-      setSortDirections(prev => ({
-        ...prev,
-        [col]: prev[col] === "desc" ? "asc" : "desc"
-      }));
-    } else {
-      setSortStack([col]);
-      setSortDirections({ [col]: "desc" });
-    }
-  };
-
-  const handleLongPress = (col) => {
-    if (!sortStack.includes(col)) {
-      setSortStack(prev => [...prev, col]);
-      setSortDirections(prev => ({ ...prev, [col]: "desc" }));
-    }
-  };
-
-  let pressTimer = null;
-  const startPress = (col) => {
-    pressTimer = setTimeout(() => handleLongPress(col), 500);
-  };
-  const cancelPress = () => clearTimeout(pressTimer);
+export default function KPIGrid() {
+  // Static placeholder data (no props or logic yet)
+  const kpis = [
+    { label: "Revenue", value: "$52,400" },
+    { label: "Orders", value: "1,238" },
+    { label: "AOV", value: "$42.30" },
+    { label: "Conversion", value: "5.1%" },
+  ];
 
   return (
-    <div className="overflow-x-auto border rounded-lg">
-      <table className="min-w-full table-auto text-sm">
-        <thead className="bg-gray-100 text-left text-gray-700">
-          <tr>
-            {headers.map((header) => (
-              <th
-                key={header}
-                className="px-3 py-2 font-semibold cursor-pointer select-none"
-                onClick={() => handleClick(header)}
-                onTouchStart={() => startPress(header)}
-                onTouchEnd={cancelPress}
-                onMouseDown={() => startPress(header)}
-                onMouseUp={cancelPress}
-                onMouseLeave={cancelPress}
-              >
-                {header.replace(/([A-Z])/g, " $1").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
-                {sortStack.includes(header) && (
-                  <span className="ml-1 text-xs text-blue-500">
-                    {sortDirections[header] === "asc" ? "↑" : "↓"}
-                  </span>
-                )}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y">
-          {getSortedData().map((row, idx) => (
-            <tr key={idx} className="hover:bg-gray-50">
-              {headers.map((col) => (
-                <td key={col} className="px-3 py-2 whitespace-nowrap text-gray-800">
-                  {row[col]}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* 
+        grid               → enable grid layout
+        grid-cols-2        → 2 columns on mobile
+        md:grid-cols-4     → 4 columns on medium+ screens
+        gap-4              → 1rem gap between items
+      */}
+      {kpis.map((kpi) => (
+        <div
+          key={kpi.label}
+          className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+        >
+          {/* 
+            bg-white          → white card
+            border            → 1px gray border
+            rounded-lg        → rounded edges
+            p-4               → padding inside card
+            shadow-sm         → subtle card shadow
+          */}
+          <p className="text-xs text-gray-500">{kpi.label}</p>
+          <p className="text-lg font-semibold text-gray-900">{kpi.value}</p>
+        </div>
+      ))}
     </div>
   );
 }

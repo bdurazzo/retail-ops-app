@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "generated_at": "2025-08-10T21:06:00-07:00",
+  "datasets": {
+    "orders_in_store": {
+      "stage": "clean",
+      "source": "NewStore",
+      "scope": "in_store_only",
+      "period": "2025-07",
+      "path": "data/NewStore/orders/2025/2025-07/2025-07_orders_in_store.csv",
+      "schema": "data/schemas/orders_in_store.schema.v1.json",
+
+      "base": "data/NewStore/orders",
+      "latest_period": "2025-07",
+      "periods": [
+        "2023-01","2023-02","2023-03","2023-04","2023-05","2023-06","2023-07","2023-08","2023-09","2023-10","2023-11","2023-12",
+        "2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12",
+        "2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07"
+      ]
+    },
+
+    "product_catalog_master": {
+      "stage": "clean",
+      "path": "data/Catalog/storefront-catalog-en-us.csv",
+      "schema": "data/schemas/product_catalog_master.schema.v1.json",
+      "version": "v001"
+    },
+
+    "top_selling_products": {
+      "stage": "clean",
+      "source": "NewStore",
+      "scope": "in_store_only",
+      "period": "2025-07",
+      "path": "data/NewStore/sales/2025/2025-07/2025-07_top_selling_products.csv",
+      "schema": "data/schemas/top_selling_products.schema.v1.json",
+      "base": "data/NewStore/sales",
+      "latest_period": "2025-07",
+      "periods": [
+        "2024-04-partial","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12",
+        "2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07"
+      ]
+    }
+  }
+}

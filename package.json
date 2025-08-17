@@ -3,25 +3,32 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "smoke:orders:in-store:july": "node scripts/smoke/validate_orders_in_store_month.mjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "ag-grid-community": "^34.1.1",
+    "ag-grid-react": "^34.1.1",
     "chart.js": "^4.5.0",
     "framer-motion": "^12.23.11",
     "fuse.js": "^7.1.0",
     "lucide-react": "^0.525.0",
-    "react": "^18.2.0",
+    "papaparse": "^5.5.3",
+    "react": "^18.3.1",
     "react-chartjs-2": "^5.3.0",
-    "react-dom": "^18.2.0",
+    "react-dom": "^18.3.1",
+    "react-icons": "^5.5.0",
     "recharts": "^3.1.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",
     "autoprefixer": "^10.4.0",
+    "csv-parse": "^6.1.0",
     "postcss": "^8.4.0",
     "tailwindcss": "^3.4.1",
-    "vite": "^4.5.0"
+    "vite": "^4.5.14"
   }
 }
