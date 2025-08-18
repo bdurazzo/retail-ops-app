@@ -1,64 +1,106 @@
 // src/utilities/timeFrames.js
+// Date math for common “this/last” windows using date-fns
+
 import {
-  addDays, subDays, subWeeks, subMonths, subQuarters, subYears,
-  startOfDay, startOfWeek, startOfMonth, startOfQuarter, startOfYear,
-  endOfWeek, endOfMonth, endOfQuarter, endOfYear
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  startOfQuarter,
+  endOfQuarter,
+  startOfYear,
+  endOfYear,
+  subWeeks,
+  subMonths,
+  subQuarters,
+  subYears,
+  parseISO,
+  isValid,
 } from "date-fns";
 
-// Week starts on Sunday (0). Change to 1 for Monday if you prefer.
-const WEEK_OPTS = { weekStartsOn: 0 };
-
-export const TIMEFRAMES = [
-  { id: "today",                label: "Today" },
-  { id: "yesterday",            label: "Yesterday" },
-  { id: "same_weekday_last_week", label: "Same Weekday Last Week" },
-  { id: "same_day_last_year",   label: "Same Date Last Year" },
-
-  { id: "rolling_7d",           label: "Last 7 Days (rolling)" },
-  { id: "rolling_30d",          label: "Last 30 Days (rolling)" },
-
-  { id: "this_week",            label: "This Week" },
-  { id: "last_week",            label: "Last Week" },
-
-  { id: "this_month",           label: "This Month" },
-  { id: "last_month",           label: "Last Month" },
-
-  { id: "this_quarter",         label: "This Quarter" },
-  { id: "last_quarter",         label: "Last Quarter" },
-
-  { id: "this_year",            label: "This Year" },
-  { id: "last_year",            label: "Last Year" },
-
-  { id: "custom",               label: "Custom…" },
+// Two lists so each selector has its own canonical options
+export const TIMEFRAME1 = ["today", "this_week", "this_month", "this_quarter", "this_year"];
+export const TIMEFRAME2 = [
+  "last_week",
+  "last_month",
+  "last_quarter",
+  "last_year",
+  "today_last_week",
+  "today_last_month",
+  "today_last_year"
 ];
 
-export function getTimeframeRange(id, today = new Date()) {
-  const T0 = startOfDay(today);
+/**
+ * Compute a concrete date range for a timeframe id.
+ * @param {string} id - e.g., "this_week" | "last_month" etc.
+ * @param {object} opts - { today?: Date|string, weekStartsOn?: 0|1 }
+ *   weekStartsOn: 0 = Sunday (US default), 1 = Monday (EU style)
+ * @returns {{start: Date, end: Date}}
+ */
+export function getTimeframeRange(id, opts = {}) {
+  const { today = new Date(), weekStartsOn = 0 } = opts;
+  const base = normalizeDate(today);
+
   switch (id) {
-    case "today":                return { start: T0, end: endOfDaySafe(T0) };
-    case "yesterday": { const d = subDays(T0, 1); return { start: d, end: endOfDaySafe(d) }; }
-    case "same_weekday_last_week": { const d = subWeeks(T0, 1); return { start: d, end: endOfDaySafe(d) }; }
-    case "same_day_last_year":  { const d = subYears(T0, 1);  return { start: d, end: endOfDaySafe(d) }; }
+    case "today":
+      return { start: base, end: base };
+    case "today_last_week": {
+      const d = subWeeks(base, 1);
+      return { start: d, end: d };
+    }
+    case "today_last_month": {
+      const d = subMonths(base, 1);
+      return { start: d, end: d };
+    }
+    case "today_last_year": {
+      const d = subYears(base, 1);
+      return { start: d, end: d };
+    }
+    case "this_week":
+      return {
+        start: startOfWeek(base, { weekStartsOn }),
+        end: endOfWeek(base, { weekStartsOn }),
+      };
+    case "last_week": {
+      const d = subWeeks(base, 1);
+      return {
+        start: startOfWeek(d, { weekStartsOn }),
+        end: endOfWeek(d, { weekStartsOn }),
+      };
+    }
 
-    case "rolling_7d":           return { start: subDays(T0, 6),  end: endOfDaySafe(T0) };
-    case "rolling_30d":          return { start: subDays(T0, 29), end: endOfDaySafe(T0) };
+    case "this_month":
+      return { start: startOfMonth(base), end: endOfMonth(base) };
+    case "last_month": {
+      const d = subMonths(base, 1);
+      return { start: startOfMonth(d), end: endOfMonth(d) };
+    }
 
-    case "this_week":            return { start: startOfWeek(T0, WEEK_OPTS), end: endOfWeek(T0, WEEK_OPTS) };
-    case "last_week": { const d = subWeeks(T0, 1); return { start: startOfWeek(d, WEEK_OPTS), end: endOfWeek(d, WEEK_OPTS) }; }
+    case "this_quarter":
+      return { start: startOfQuarter(base), end: endOfQuarter(base) };
+    case "last_quarter": {
+      const d = subQuarters(base, 1);
+      return { start: startOfQuarter(d), end: endOfQuarter(d) };
+    }
 
-    case "this_month":           return { start: startOfMonth(T0),   end: endOfMonth(T0) };
-    case "last_month": { const d = subMonths(T0, 1); return { start: startOfMonth(d), end: endOfMonth(d) }; }
+    case "this_year":
+      return { start: startOfYear(base), end: endOfYear(base) };
+    case "last_year": {
+      const d = subYears(base, 1);
+      return { start: startOfYear(d), end: endOfYear(d) };
+    }
 
-    case "this_quarter":         return { start: startOfQuarter(T0), end: endOfQuarter(T0) };
-    case "last_quarter": { const d = subQuarters(T0, 1); return { start: startOfQuarter(d), end: endOfQuarter(d) }; }
-
-    case "this_year":            return { start: startOfYear(T0),    end: endOfYear(T0) };
-    case "last_year": { const d = subYears(T0, 1); return { start: startOfYear(d), end: endOfYear(d) }; }
-
-    default:                     return { start: T0, end: endOfDaySafe(T0) }; // or throw if you want strictness
+    default:
+      // Fallback to a single-day range around "today"
+      return { start: base, end: base };
   }
 }
 
-function endOfDaySafe(d) {
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+function normalizeDate(d) {
+  if (d instanceof Date) return d;
+  if (typeof d === "string") {
+    const parsed = parseISO(d);
+    if (isValid(parsed)) return parsed;
+  }
+  return new Date();
 }
