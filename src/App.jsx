@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StoreDashboard } from './pages/StoreDashboard';
+import StoreDashboard  from './pages/StoreDashboard';
 import { InventoryLookup } from './pages/InventoryLookup';
 import { Merchandising } from './pages/Merchandising';
 import { AssistantPanel } from './pages/AssistantPanel';
