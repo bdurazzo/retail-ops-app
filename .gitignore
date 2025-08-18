@@ -9,3 +9,6 @@ data/
 *.csv
 # large data
 /data/NewStore/catalog/*.csv
+
+# Big catalogs
+/data/NewStore/catalog/
