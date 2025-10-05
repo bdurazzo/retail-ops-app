@@ -1,0 +1,62 @@
+/**
+ * Drag and Drop Type Registry
+ *
+ * Centralized constants and schemas for all drag/drop operations
+ * across the application.
+ */
+
+export const DRAG_TYPES = {
+  PRODUCT: 'product',
+  VIEW_MODE: 'view-mode',
+  FILTER: 'filter',        // Future: drag filters
+  COLUMN: 'column',        // Future: reorder columns
+  ROW: 'row'               // Future: reorder rows
+};
+
+/**
+ * Schema definitions for each drag type
+ * Provides structure and defaults for drag data payloads
+ */
+export const dragDataSchemas = {
+  [DRAG_TYPES.PRODUCT]: {
+    type: DRAG_TYPES.PRODUCT,
+    title: '',
+    content: [],
+    options: {}
+  },
+
+  [DRAG_TYPES.VIEW_MODE]: {
+    type: DRAG_TYPES.VIEW_MODE,
+    viewMode: '',
+    label: ''
+  },
+
+  [DRAG_TYPES.FILTER]: {
+    type: DRAG_TYPES.FILTER,
+    filterType: '',
+    filterValue: '',
+    label: ''
+  },
+
+  [DRAG_TYPES.COLUMN]: {
+    type: DRAG_TYPES.COLUMN,
+    columnKey: '',
+    columnIndex: -1
+  },
+
+  [DRAG_TYPES.ROW]: {
+    type: DRAG_TYPES.ROW,
+    rowId: '',
+    rowIndex: -1
+  }
+};
+
+/**
+ * View mode mappings for header → view mode conversions
+ */
+export const VIEW_MODE_MAP = {
+  'Color': 'by-color',
+  'Size': 'by-size',
+  'Variant': 'by-variant',
+  'Summary': 'summary'
+};

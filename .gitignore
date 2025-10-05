@@ -12,3 +12,6 @@ data/
 
 # Big catalogs
 /data/NewStore/catalog/
+
+# Ignore stock-on-hand export batches
+soh_exports/
