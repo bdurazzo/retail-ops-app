@@ -1,7 +1,5 @@
 import React from 'react';
 import { getAlignmentClasses } from '../../tableProps.js';
-import { shouldApplyRowPlugin } from '../../../../plugins/default/table/RowPlugin.jsx';
-import NestedTable from '../../NestedTable.jsx';
 
 /**
  * B2Section - Scrolling body section
@@ -27,13 +25,30 @@ export default function B2Section({
   onCellStateUpdate = () => {},
   expandedRows = {},
   toggleRowExpanded = () => {},
-  tableContainerWidth = 0
+  tableContainerWidth = 0,
+  pluginComponents = {},
+  // Empty state props (from container)
+  isEmpty = false,
+  emptyConfig = {}
 }) {
   // Get layout from context
   const { layout } = tableContext || {};
-  const { metricColWidth } = layout || {};
+  const { metricColWidth, firstColWidth } = layout || {};
   const rowHeight = tableContext?.rowHeight || 50;
-  
+
+  // If empty, render empty state from container config
+  if (isEmpty) {
+    return (
+      <div
+        className={emptyConfig.className || "flex-1 min-h-0 relative z-0"}
+        ref={tableContext?.b2TrackRef}
+        style={{ minWidth: emptyConfig.minWidth, minHeight: emptyConfig.minHeight }}
+      >
+        <span>{emptyConfig.placeholder}</span>
+      </div>
+    );
+  }
+
   // Calculate grid template and total width from column widths
   const gridTemplate = columnKeys.map(key => `${columnWidths[key] || metricColWidth || 80}px`).join(' ');
   const totalMetricWidth = columnKeys.reduce((sum, key) => sum + (columnWidths[key] || metricColWidth || 80), 0);
@@ -51,28 +66,16 @@ export default function B2Section({
   };
   
   return (
-    <div className="flex-1 min-h-0 relative z-0">
-      <div 
-        ref={tableContext?.b2TrackRef} 
-        className="will-change-transform transform-gpu relative z-0" 
+    <div className="flex-1 min-h-0 relative">
+      <div
+        ref={tableContext?.b2TrackRef}
+        className="will-change-transform transform-gpu relative"
         style={{ width: totalMetricWidth }}
       >
         {rows.map((row, rIdx) => {
-          // Check if row should use RowPlugin
-          if (shouldApplyRowPlugin(row, cellState)) {
-            return (
-              <NestedTable
-                key={`b2-nested-${rIdx}`}
-                row={row}
-                cellState={cellState}
-                onCellStateUpdate={onCellStateUpdate}
-                section="B2"
-                expandedRows={expandedRows}
-                toggleRowExpanded={toggleRowExpanded}
-                rowHeight={rowHeight}
-                tableContainerWidth={tableContainerWidth}
-              />
-            );
+          // Skip plugin rows (already rendered in A2)
+          if (row && row._selectPlugin) {
+            return null;
           }
 
           // Check if A_KEY custom renderer returns a full-width component
@@ -107,29 +110,29 @@ export default function B2Section({
           // Normal grid rendering
           const rowClasses = rIdx % 2 ? (styles.oddRow || "bg-gray-50") : (styles.evenRow || "bg-white");
           const customClasses = styles.classes || "";
-          
+
           return (
-            <div key={`b2r-${rIdx}`} className={`${rowClasses} ${customClasses}`}>
+            <div key={`b2r-${rIdx}`} className={`${rowClasses} ${customClasses} relative z-10`}>
               <div
                 className="grid"
                 style={{ gridTemplateColumns: gridTemplate }}
               >
                 {columnKeys.map((columnKey) => {
                   const isPlaceholder = row === null;
-                  
+
                   // Get cell value
                   const rawValue = isPlaceholder ? null : row?.[columnKey];
                   const display = isPlaceholder ? "\u00A0" : formatVal(columnKey, rawValue);
-                  
+
                   // Check for custom cell renderer
                   const customRenderer = customCellRenderer?.[columnKey];
-                  const cellContent = customRenderer && row !== null 
+                  const cellContent = customRenderer && row !== null
                     ? customRenderer(rawValue, row, rIdx, columnKey)
                     : display;
-                  
+
                   // Check if this is a CellToolbar component
                   const isCellToolbar = cellContent && typeof cellContent === 'object' && cellContent.type;
-                  
+
                   if (isCellToolbar) {
                     return (
                       <div
@@ -141,15 +144,15 @@ export default function B2Section({
                       </div>
                     );
                   }
-                  
+
                   // Normal cell rendering
                   const rowId = row?._rowId || `row_${rIdx}`;
                   const cellKey = `${rowId}_${columnKey}`;
                   const cellData = cellState[cellKey];
 
                   const colAlignment = columnAlignments[columnKey] || alignment;
-                  const baseClasses = styles.cell || "px-3 flex items-center border-r border-gray-100 text-[11px] leading-tight whitespace-normal break-words overflow-hidden tabular-nums";
-                  const contentClasses = isPlaceholder ? (styles.placeholder || "text-transparent select-none") : (styles.content || "text-gray-600");
+                  const baseClasses = styles.cell || "";
+                  const contentClasses = isPlaceholder ? "text-transparent select-none" : "";
 
                   const className = `${baseClasses} ${getAlignmentClasses(colAlignment)} ${contentClasses}`.trim();
 
@@ -162,19 +165,41 @@ export default function B2Section({
                   };
 
                   const handleDragOver = (e) => {
-                    e.preventDefault();
+                    // Only preventDefault for drag events, not wheel/scroll
+                    if (e.dataTransfer) {
+                      e.preventDefault();
+                    }
                   };
+
+                  // Render plugin component if cellData has a plugin
+                  const PluginComponent = cellData?.type && pluginComponents?.[cellData.type];
+
+                  // Use pluginCell style if plugin exists, otherwise normal cell style
+                  const cellClassName = PluginComponent
+                    ? (styles.pluginCell || className)
+                    : className;
 
                   return (
                     <div
                       key={`b2c-${rIdx}-${columnKey}`}
-                      className={className}
+                      className={cellClassName}
                       style={{ height: rowHeight }}
                       title={row !== null ? (typeof cellContent === 'string' ? cellContent : display) : ""}
                       onDrop={handleDrop}
                       onDragOver={handleDragOver}
                     >
-                      {cellData ? `[${cellData.type}]` : cellContent}
+                      {PluginComponent ? (
+                        <PluginComponent
+                          row={row}
+                          cellState={cellState}
+                          onCellStateUpdate={onCellStateUpdate}
+                          expandedRows={expandedRows}
+                          toggleRowExpanded={toggleRowExpanded}
+                          rowHeight={rowHeight}
+                        />
+                      ) : (
+                        cellData ? `[${cellData.type}]` : cellContent
+                      )}
                     </div>
                   );
                 })}

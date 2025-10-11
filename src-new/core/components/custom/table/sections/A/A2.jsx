@@ -1,7 +1,5 @@
 import React from 'react';
 import { getAlignmentClasses } from '../../tableProps.js';
-import { shouldApplyRowPlugin } from '../../../../plugins/default/table/RowPlugin.jsx';
-import NestedTable from '../../NestedTable.jsx';
 
 /**
  * A2Section - Fixed column body section
@@ -28,70 +26,82 @@ export default function A2Section({
   onCellStateUpdate = () => {},
   expandedRows = {},
   toggleRowExpanded = () => {},
-  tableContainerWidth = 0
+  tableContainerWidth = 0,
+  pluginComponents = {},
+  // Empty state props (from container)
+  isEmpty = false,
+  emptyConfig = {}
 }) {
   // Get layout from context
   const firstColWidth = tableContext?.firstColWidth || 120;
   const rowHeight = tableContext?.rowHeight || 50;
 
-  // Handle empty columns
-  if (!columnKeys || columnKeys.length === 0) return null;
+  // If empty, render empty state from container config
+  if (isEmpty) {
+    return (
+      <div
+        className={emptyConfig.className || "flex-none bg-white shadow relative isolate"}
+        style={{ width: emptyConfig.width || firstColWidth, minHeight: emptyConfig.minHeight }}
+      >
+        <span>{emptyConfig.placeholder}</span>
+      </div>
+    );
+  }
 
   // Calculate total width for fixed columns
   const totalWidth = columnKeys.reduce((sum, key) => {
     return sum + (columnWidths[key] || firstColWidth);
   }, 0);
-  
+
   return (
     <div
-      className="flex-none bg-white relative z-50 isolate"
+      className="flex-none bg-white relative z-20"
       style={{ width: totalWidth }}
     >
       {rows.map((row, rIdx) => {
-        // Check if row should use RowPlugin
-        const usePlugin = shouldApplyRowPlugin(row, cellState);
-
-        console.log('🔍 A2 ROW CHECK:', {
-          rowIndex: rIdx,
-          rowId: row?._rowId,
-          usePlugin,
-          cellStateKeys: Object.keys(cellState),
-          cellStateCount: Object.keys(cellState).length
-        });
-
-        if (usePlugin) {
+        // Check if row has a plugin renderer (full-width)
+        if (row && row._selectPlugin) {
+          const PluginComponent = row._selectPlugin;
           return (
-            <NestedTable
-              key={`a2-nested-${rIdx}`}
+            <PluginComponent
+              key={`a2-plugin-${rIdx}`}
               row={row}
-              cellState={cellState}
-              onCellStateUpdate={onCellStateUpdate}
-              section="A2"
-              expandedRows={expandedRows}
-              toggleRowExpanded={toggleRowExpanded}
-              rowHeight={rowHeight}
-              tableContainerWidth={tableContainerWidth}
+              {...row._pluginProps}
             />
           );
         }
 
         // Check for full-width custom content first
         const hasFullWidthContent = columnKeys.some(key => {
-          const content = customRenderer?.[key] && row !== null 
-            ? customRenderer[key](row[key], row, rIdx, key)
-            : null;
-          return content && typeof content === 'object' && content.type === 'fullWidth';
+          if (!customRenderer?.[key] || row === null) return false;
+          try {
+            const content = customRenderer[key](row[key], row, rIdx, key);
+            return content && typeof content === 'object' && content.type === 'fullWidth';
+          } catch (error) {
+            return false;
+          }
         });
-        
+
         if (hasFullWidthContent) {
           const fullWidthColumnKey = columnKeys.find(key => {
-            const content = customRenderer?.[key] && row !== null 
-              ? customRenderer[key](row[key], row, rIdx, key)
-              : null;
-            return content && typeof content === 'object' && content.type === 'fullWidth';
+            if (!customRenderer?.[key] || row === null) return false;
+            try {
+              const content = customRenderer[key](row[key], row, rIdx, key);
+              return content && typeof content === 'object' && content.type === 'fullWidth';
+            } catch (error) {
+              return false;
+            }
           });
-          
-          const content = customRenderer[fullWidthColumnKey](row[fullWidthColumnKey], row, rIdx, fullWidthColumnKey);
+
+          const content = (() => {
+            if (!customRenderer?.[fullWidthColumnKey] || row === null) return null;
+            try {
+              return customRenderer[fullWidthColumnKey](row[fullWidthColumnKey], row, rIdx, fullWidthColumnKey);
+            } catch (error) {
+              console.warn(`Full-width renderer for column "${fullWidthColumnKey}" crashed:`, error);
+              return null;
+            }
+          })();
           
           return (
             <div
@@ -105,21 +115,27 @@ export default function A2Section({
           );
         }
         
-        // Render multiple fixed columns
+        // Render multiple fixed columns (or empty row container if no columns)
         return (
-          <div 
-            key={`a2-${rIdx}`} 
+          <div
+            key={`a2-${rIdx}`}
             className={`${rIdx % 2 ? "bg-gray-50 relative z-20" : "bg-white relative z-20"} ${styles.classes || ""} flex`}
             style={{ height: rowHeight }}
           >
-            {columnKeys.map((columnKey) => {
+            {columnKeys.length === 0 ? null : columnKeys.map((columnKey) => {
               const colWidth = columnWidths[columnKey] || firstColWidth;
               const colAlignment = columnAlignments[columnKey] || alignment;
               
-              // Check for custom renderer
-              const customContent = customRenderer?.[columnKey] && row !== null 
-                ? customRenderer[columnKey](row[columnKey], row, rIdx, columnKey)
-                : null;
+              // Check for custom renderer (with error handling)
+              const customContent = (() => {
+                if (!customRenderer?.[columnKey] || row === null) return null;
+                try {
+                  return customRenderer[columnKey](row[columnKey], row, rIdx, columnKey);
+                } catch (error) {
+                  console.warn(`Custom renderer for column "${columnKey}" crashed:`, error);
+                  return null;
+                }
+              })();
               
               // Handle CellToolbar components
               const isCellToolbar = customContent && typeof customContent === 'object' && customContent.type;
@@ -141,8 +157,14 @@ export default function A2Section({
               const cellKey = `${rowId}_${columnKey}`;
               const cellData = cellState[cellKey];
 
-              const baseClasses = styles.cell || "px-3 flex shadow-xl shadow-gray-200 items-center text-[11px] leading-tight relative z-30";
-              const contentClasses = isPlaceholder ? (styles.placeholder || "text-transparent select-none") : (styles.content || "text-gray-600");
+              // Render plugin component if cellData has a plugin
+              const PluginComponent = cellData?.type && pluginComponents?.[cellData.type];
+
+              // Use pluginCell style if plugin exists, otherwise normal cell style
+              const baseClasses = PluginComponent
+                ? (styles.pluginCell || styles.cell || "")
+                : (styles.cell || "");
+              const contentClasses = isPlaceholder ? "text-transparent select-none" : "";
 
               const cellValue = isPlaceholder ? "Placeholder" : (
                 customContent && typeof customContent !== 'object'
@@ -159,7 +181,10 @@ export default function A2Section({
               };
 
               const handleDragOver = (e) => {
-                e.preventDefault();
+                // Only preventDefault for drag events, not wheel/scroll
+                if (e.dataTransfer) {
+                  e.preventDefault();
+                }
               };
 
               return (
@@ -167,15 +192,26 @@ export default function A2Section({
                   key={`${columnKey}-${rIdx}`}
                   className={`${baseClasses} ${getAlignmentClasses(colAlignment)} ${contentClasses}`}
                   style={{ width: colWidth, height: rowHeight }}
-                  title={!isPlaceholder && row?.[columnKey] ? String(row[columnKey]) : ""}
+                  title={!isPlaceholder && row !== null && row?.[columnKey] ? String(row[columnKey]) : ""}
                   onDrop={handleDrop}
                   onDragOver={handleDragOver}
                 >
-                  <div className="w-full overflow-hidden">
-                    <div className="truncate">
-                      {cellData ? `[${cellData.type}]` : cellValue}
+                  {PluginComponent ? (
+                    <PluginComponent
+                      row={row}
+                      cellState={cellState}
+                      onCellStateUpdate={onCellStateUpdate}
+                      expandedRows={expandedRows}
+                      toggleRowExpanded={toggleRowExpanded}
+                      rowHeight={rowHeight}
+                    />
+                  ) : (
+                    <div className="w-full overflow-hidden">
+                      <div className="truncate">
+                        {cellData ? `[${cellData.type}]` : cellValue}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })}

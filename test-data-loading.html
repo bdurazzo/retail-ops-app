@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Data Loading</title>
+</head>
+<body>
+    <h1>Testing Data Loading</h1>
+    <button onclick="testCSVLoading()">Test CSV Loading</button>
+    <button onclick="testTableConfig()">Test Table Config</button>
+    <div id="results"></div>
+
+    <script type="module">
+        import { loadCSVData, toTable } from './src-new/core/utils/tableConfig.js';
+        
+        window.testCSVLoading = async function() {
+            const results = document.getElementById('results');
+            results.innerHTML = 'Loading CSV...';
+            
+            try {
+                const data = await loadCSVData('/data/retail/orders/2025/2025-08/line_items.csv');
+                results.innerHTML = `
+                    <h3>CSV Loading Success!</h3>
+                    <p>Loaded ${data.length} rows</p>
+                    <p>Sample row: ${JSON.stringify(data[0], null, 2)}</p>
+                `;
+            } catch (error) {
+                results.innerHTML = `<h3>Error:</h3><p>${error.message}</p>`;
+            }
+        };
+        
+        window.testTableConfig = async function() {
+            const results = document.getElementById('results');
+            results.innerHTML = 'Loading and transforming data...';
+            
+            try {
+                const data = await loadCSVData('/data/retail/orders/2025/2025-08/line_items.csv');
+                const table = toTable(data, { 
+                    scope: 'line_items',
+                    columns: ['product_name', 'color', 'quantity', 'discounted_price'],
+                    groupBy: 'product_name',
+                    aggregation: 'sum'
+                });
+                
+                results.innerHTML = `
+                    <h3>Table Config Success!</h3>
+                    <p>Original rows: ${data.length}</p>
+                    <p>Grouped rows: ${table.rows.length}</p>
+                    <p>Columns: ${table.columnKeys.join(', ')}</p>
+                    <p>Totals: ${JSON.stringify(table.totals, null, 2)}</p>
+                    <p>Sample grouped row: ${JSON.stringify(table.rows[0], null, 2)}</p>
+                `;
+            } catch (error) {
+                results.innerHTML = `<h3>Error:</h3><p>${error.message}</p>`;
+            }
+        };
+    </script>
+</body>
+</html>

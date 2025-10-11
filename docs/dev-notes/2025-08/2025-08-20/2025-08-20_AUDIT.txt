@@ -1,0 +1,546 @@
+AUDIT FILE CHECKLIST
+
+[x]	1.	lib/dataPaths.js
+[x]	2.	data/registry/index.json
+[x]	3.	src/features/analytics/data/loaders/loaderRegistry.js (for DATASET and getRegistryId)
+[x]	4.	src/features/analytics/registry/tableDataRegistry.js (to confirm how range is applied downstream)
+[x]	5.	src/utilities/time/timeRanges.js (for isWithinRange and date logic)
+[x]	6.	src/pages/Analytics.jsx (the effect that builds criteria for getTableForKPI)
+[x]	7.	src/features/analytics/state/controlsContext.jsx (time state shape & actions)
+[x]	8.	src/features/analytics/components/panels/TimePanel.jsx (how start/end are staged/applied)
+
+---------------------------------------
+
+1) dataPaths.js
+
+What this file does well
+	•	Single source of truth: REGISTRY_FILE = "data/registry/index.json" gives one canonical entry point for the registry.
+	•	Dual environments supported: Clean split between loadJsonBrowser (fetch) and loadJsonNode (fs/promises), selectable via getDataPaths({ env }).
+	•	Small, predictable API: Exports are minimal (getDataPaths, plus the two loaders), easy to mock in tests.
+
+Integration assumptions (verify)
+	1.	Dev server pathing
+loadJsonBrowser fetches /${relPath} → this assumes the app is served with a root base (/) and that the dev/prod server exposes data/registry/index.json statically.
+	•	If you ever deploy under a subpath (e.g., /app/), fetch(/data/…) will 404 unless Vite’s base and your static asset config are aligned.
+	2.	Runtime environment selection
+getDataPaths({ env = "browser" }) relies on the caller to pass "node" for scripts. If a Node script forgets to pass it, it’ll try to fetch, which will fail.
+	3.	Working directory for Node
+loadJsonNode uses resolve(process.cwd(), relPath)—great if you run scripts from repo root. If scripts run from elsewhere, cwd may not point at the project root.
+	4.	Error surfacing
+	•	Browser path returns a readable error (failed ${relPath} (${status})), good.
+	•	Node path throws if JSON parse fails (fine), but you won’t see which file unless you know relPath (you do).
+
+Things to consider (not required)
+	•	Add a tiny cache (optional)
+If getDataPaths is called repeatedly in the browser, you can memoize the resolved JSON to avoid multiple fetches while the session is alive.
+	•	Stricter typing / schema (optional)
+If you’re depending on specific keys (e.g., orders.months, manifests, etc.), a lightweight runtime check here can fail fast with a helpful message (vs. downstream undefined errors).
+	•	Automatic env detection (optional)
+Provide a “best-effort” default: if typeof window === "undefined", use node; else browser. Still allow overriding via { env }.
+	•	Base path awareness (optional)
+If you anticipate subpath deployments, consider accepting a base option or reading it from a config so fetch targets ${base}/${relPath}.
+	•	Robust Node path resolution (optional)
+Instead of process.cwd(), resolve relative to this file’s directory:
+
+import { fileURLToPath } from "url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const abs = resolve(__dirname, "..", relPath); // adjust as needed
+
+This makes scripts resilient to different CWDs.
+
+Quick sanity checklist to unblock time-range work
+	•	Confirm data/registry/index.json exists and is reachable at http://localhost:<port>/data/registry/index.json.
+	•	If not: ensure Vite serves data/ as a static dir (e.g., keep data/ under public/ or configure a static plugin).
+	•	Make sure the loader registry calls getDataPaths({ env: "browser" }) in the app, and getDataPaths({ env: "node" }) in node scripts.
+	•	Verify that the registry JSON actually lists multiple months / files you expect to query across. If the manifest only lists July, upstream fetches will, by design, only “see” July.
+
+Questions to close assumptions
+	1.	Where does data/registry/index.json live in the repo—under public/data/… or data/… at root? (This determines whether Vite serves it by default.)
+	2.	Will we ever deploy the app under a non-root base path? (If yes, we should make loadJsonBrowser base-aware.)
+	3.	Do we want getDataPaths to auto-detect env, or keep it explicit for safety?
+	4.	Should we add a tiny in-memory cache to avoid fetching the registry multiple times per session?
+
+---------------------------------------
+
+2) data/registry/index.json
+
+What looks good
+	•	The manifest is small and explicit: one dataset (orders_in_store) with a known base, schema, and a concrete periods list. That’s perfect for driving range → month resolution from the Time Panel.
+	•	filename_pattern is declared (great), and the periods array already includes 2023-01 … 2025-07, which is exactly what a resolver needs to expand a custom range.
+
+Gaps / risks that will block time‑range loading
+	1.	Year subdirectory mismatch
+Your actual fetch errors earlier showed Vite trying:
+.../data/NewStore/orders/2025/2025-08/2025-08_orders_in_store.csv
+but the manifest implies a flat path like:
+data/NewStore/orders/2025-08_orders_in_store.csv
+If the on‑disk layout includes a YYYY/ folder (or even YYYY/MM/), the loader will miss files unless the pattern reflects that.
+	2.	Empty coverage
+coverage.start / coverage.end are empty. That’s fine during experimentation, but the loader can’t use it to short‑circuit range expansion or show user hints. We can still rely solely on periods, but filling coverage makes validation and UX easier.
+	3.	No declared date field / grain note
+The loader is (likely) filtering by "Order Date/Time". Declaring this in the manifest keeps the loader generic and prevents drift.
+Also, we previously noted a pre‑2024‑04‑09 grain change (only item style & totals). That belongs in the manifest so the pipeline can adapt automatically.
+
+Minimal changes I recommend (manifest‑only)
+
+If your real file tree is data/NewStore/orders/<YYYY>/<YYYY-MM>_<name>.csv, tweak the pattern so the loader can compose paths without guessing.
+
+Option A — encode the year folder into filename_pattern
+
+{
+  "version": 1,
+  "generated_at": "2025-08-20T00:00:00-07:00",
+  "datasets": {
+    "orders_in_store": {
+      "stage": "clean",
+      "source": "NewStore",
+      "scope": "in_store_only",
+      "schema": "data/schemas/orders_in_store.schema.v1.json",
+      "base": "data/NewStore/orders",
+      "filename_pattern": "YYYY/YYYY-MM_orders_in_store.csv",
+      "date_field": "Order Date/Time",
+      "coverage": {
+        "start": "2023-01",
+        "end": "2025-07"
+      },
+      "grain_notes": {
+        "change_date": "2024-04-09",
+        "pre_change": "style+totals only",
+        "post_change": "line-item detail"
+      },
+      "periods": [
+        "2023-01","2023-02","2023-03","2023-04","2023-05","2023-06","2023-07","2023-08","2023-09","2023-10","2023-11","2023-12",
+        "2024-01","2024-02","2024-03","2024-04","2024-05","2024-06","2024-07","2024-08","2024-09","2024-10","2024-11","2024-12",
+        "2025-01","2025-02","2025-03","2025-04","2025-05","2025-06","2025-07"
+      ]
+    }
+  }
+}
+
+Option B — add an explicit path_pattern and keep filename_pattern for display
+
+{
+  "datasets": {
+    "orders_in_store": {
+      "base": "data/NewStore/orders",
+      "path_pattern": "{base}/{YYYY}/{YYYY}-{MM}_orders_in_store.csv",
+      "filename_pattern": "YYYY-MM_orders_in_store.csv",
+      "date_field": "Order Date/Time",
+      "coverage": { "start": "2023-01", "end": "2025-07" },
+      "periods": ["...same list as now..."]
+    }
+  }
+}
+
+How this unblocks the Time Panel (no code here, just wiring clarity)
+	•	TimePanel → controls state provides a custom {start, end}.
+	•	Loader registry expands that to months by intersecting the range with periods from the manifest (example: 2023-11..2024-02 → ["2023-11","2023-12","2024-01","2024-02"]).
+	•	For each period, the loader builds the path from base + path_pattern (or filename_pattern) and fetches.
+With the pattern reflecting your real folder structure, July‑only will no longer be a choke point.
+	•	Post‑load, the table layer filters by date_field (declared here) for exact range edges and applies limits/sort.
+
+Quick verification checklist (manifest → loader → UI)
+	1.	Confirm on‑disk path for one month (e.g., 2025‑07) and make the manifest pattern match exactly.
+	2.	Fill coverage.start/end to the same bounds as periods (or omit coverage entirely for now).
+	3.	Add date_field: "Order Date/Time" and (optional) grain_notes so we can later branch logic without hunting old threads.
+	4.	In the loader, ensure it:
+	•	uses periods from manifest to expand a custom range,
+	•	composes file paths from the manifest pattern (no hardcoded “July” anything),
+	•	merges rows and lets the table layer do final date filtering (already in place).
+
+If you confirm the year-folder layout, I’ll draft the tiniest possible loader path change next so we don’t touch any animations or panel logic.
+
+---------------------------------------
+
+3) loaderRegistry.js
+
+⸻
+
+Observations
+	•	Purpose: This file acts as the app-facing registry, mapping high-level dataset names (like "orders") to the actual loader implementation (orders_in_store).
+	•	Imports:
+	•	Pulls in loadRows from ./orders/loadRows.js as loadOrdersRows.
+	•	DATASET constants:
+	•	Declares orders as the only active dataset. Others are commented out (sales, kepler, etc.).
+	•	Registry ID mapping:
+	•	Exposes "orders" at the app level but internally translates it to "orders_in_store".
+	•	This aligns the UI/API with internal naming.
+	•	getRegistryId:
+	•	Returns the registry key, defaulting to the given appDatasetId if no mapping exists.
+	•	registry:
+	•	Only "orders" → loadOrdersRows is wired.
+	•	getLoader:
+	•	Returns a loader function by dataset ID. Throws if no loader exists.
+	•	Helper functions:
+	•	monthsFromRange: expands a date range into YYYY-MM month strings.
+	•	intersectWithAvailable: trims requested periods against what’s available in the manifest.
+
+⸻
+
+Strengths
+	•	Clean separation of app-facing dataset IDs (DATASET) vs. internal registry IDs (REGISTRY_IDS).
+	•	Clear extension path for adding more datasets later.
+	•	Guards against requesting loaders that don’t exist.
+
+⸻
+
+Weaknesses / Pain Points
+	1.	Range Handling:
+	•	monthsFromRange produces month-level granularity only, not day-level. This may explain why ranges are limited to monthly buckets (e.g., July 2025 issue).
+	•	It presumes the manifest only knows about months (YYYY-MM) rather than daily order files (YYYY-MM-DD).
+	2.	Available Manifest Intersection:
+	•	intersectWithAvailable silently drops periods not in the manifest. If the manifest is incomplete (e.g., missing pre-July months), those periods will never load.
+	3.	Tight Coupling:
+	•	The registry still relies on orders_in_store loader logic. If that loader itself is month-scoped, we inherit that limitation.
+	4.	Unclear Fallback Behavior:
+	•	If no range/period is passed, the loader may default to nothing, leading to empty tables.
+
+⸻
+
+Implications for Time Panel
+	•	The time panel may correctly dispatch a range, but:
+	•	If the loader + registry pipeline only supports month-level resolution, it cannot fetch arbitrary start/end ranges.
+	•	If the manifest only declares July 2025, intersectWithAvailable will ensure only July loads—exactly the symptom you’re seeing.
+
+⸻
+
+Questions to Clarify
+	1.	Does the manifest (data/registry/index.json) define periods at YYYY-MM level or at YYYY-MM-DD?
+	2.	Should the system load entire history at once and then filter by range, or should it dynamically load only the months within the range?
+	3.	Do we want to keep month-based slicing for performance, or switch to row-level filtering on the full dataset?
+	4.	Should the registry provide a fallback loader (load all available history if no explicit range is passed)?
+
+---------------------------------------
+
+4) tableDataRegistry.js
+
+What this file does (and doesn’t)
+	•	Resolves a KPI program → picks a dataset loader via getDatasetLoader(program.dataset).
+	•	Builds loader args from criteria using buildLoadArgs() (only forwards period, periods, range).
+	•	Calls the dataset loader (await load(loadArgs)).
+	•	Applies client‑side filters in applyDateAndLimit() including:
+	•	exact date / datePrefix
+	•	custom range (using isWithinRange(ymd, range))
+	•	product params.search
+	•	limit
+	•	Aggregates and formats rows for the table.
+
+Key observations
+	1.	This file does forward range to the loader.
+buildLoadArgs includes range when present. So if the loader ignores range or can’t load multiple months, the limitation is not here—it’s downstream.
+	2.	Client‑side range filter is correct.
+applyDateAndLimit slices "Order Date/Time" to YYYY-MM-DD and checks with isWithinRange(ymd, range). If the loader returns all rows for the requested months, this filter will correctly trim to the requested days.
+	3.	The bottleneck is likely the loader and/or manifest.
+	•	If the loader only loads July files (e.g., via period defaulting to "2025-07" or by intersecting requested months with a July‑only manifest), you’ll only ever see July rows, even though the range logic here is fine.
+	•	Your debug log:
+console.debug("[Loader call]", { dataset: program.dataset, loadArgs, criteriaRange: criteria.range });
+is perfect to confirm what we pass. We need the loader to print what it actually fetches.
+	4.	Sorting/limit are applied after aggregation.
+Not related to the July issue, but good to know: limit in criteria is a hard cap post‑aggregation (there’s also a program.columns.limit fallback).
+
+What to verify next (minimal, targeted)
+
+In the loader and manifest—not here. The path you showed earlier implies:
+	•	loaderRegistry.js may expand range into month buckets and intersect with a manifest.
+	•	If the manifest (or dataPaths) only lists 2025-07, anything outside won’t load.
+
+Quick instrumentation you can add (if helpful)
+
+Keep your existing log, and add two tiny logs in the dataset loader (not in this file):
+
+// in orders loader (e.g., src/features/analytics/data/loaders/orders/loadRows.js)
+console.debug("[Orders loader] incoming loadArgs:", loadArgs);
+// after resolving the file list:
+console.debug("[Orders loader] months/files to fetch:", filesOrMonths);
+
+If you see only 2025-07 there, we’ve confirmed the culprit.
+
+Conclusions
+	•	tableDataRegistry.js looks correct for forwarding range and filtering on it.
+	•	The “July only” behavior almost certainly lives in the orders loader + manifest intersection (monthly granularity and/or incomplete manifest).
+	•	Fix will be in the loader/manifest: ensure it expands range to all months spanned and that the manifest lists those months (or introduce a dynamic directory scan).
+
+---------------------------------------
+
+timeRanges.js
+
+What looks solid
+	•	Clear range builders for day/week/month/quarter/year/custom. All return { start, end, grain } with start-of-day / end-of-day normalization.
+	•	makeRange picks one shape deterministically (good to avoid ambiguity).
+	•	isWithinRange uses parsed Date objects and inclusive bounds (≥ start and ≤ end), which is what you want for reporting.
+	•	Retail week helpers and bucketKey look consistent for later grouping if needed.
+
+Risks / gotchas to be aware of
+	1.	Input parsing (what strings work)
+	•	parseDateSafe accepts:
+	•	Date instances,
+	•	timestamps,
+	•	strings only if: "YYYY-MM-DD" or anything new Date(x) can parse.
+	•	It does not parse bare "YYYY-MM" (that’s handled only in rangeForMonth / makeRange({ month })).
+	•	If anywhere else we pass "YYYY-MM" into isWithinRange, it will fail to parse and return false (i.e., filter out everything).
+	2.	Mixed sources passing to isWithinRange
+	•	If your row dates are strings like "2025-07-04 12:34:56" (POS exports often are), parseDateSafe will rely on new Date(x) which can be timezone-sensitive and locale-fragile.
+	•	You previously filtered elsewhere by slicing s.slice(0, 10) and comparing as YYYY-MM-DD. That’s safe, but it bypasses this module’s parsing. If those two approaches coexist, you can get inconsistent results.
+	3.	Half ranges
+	•	isWithinRange returns false unless both range.start and range.end exist. That’s fine (explicit), but it means the UI must always set both bounds for custom ranges to take effect.
+	4.	Local time vs UTC
+	•	All normalization uses local time (startOfDay/endOfDay). That’s consistent across functions, but if the source timestamps are UTC ISO strings ("2025-07-01T00:00:00Z"), there can be off-by-one-day edge cases around midnight depending on the viewer’s timezone.
+
+What to confirm in the rest of the pipeline (since July default was removed)
+
+To make “any range” work, the bottleneck is typically how rows are loaded—not this utility. Please confirm these three things upstream/downstream:
+	1.	Loader accepts a full range
+	•	Your loaderRegistry.getLoader(dataset) function must accept { range: { start: Date, end: Date } } and fetch rows across months/years, not just one period folder.
+	•	If the loader still only opens a single YYYY-MM_orders_in_store.csv, it will cap you at that month no matter what isWithinRange does later.
+	2.	Rows’ date field fed to isWithinRange is parseable
+	•	If you plan to use isWithinRange, ensure the row date you pass is either:
+	•	A Date object (fastest, safest), or
+	•	A "YYYY-MM-DD" string (works with parseDateSafe), or
+	•	A fully ISO string that new Date() reliably parses in your runtime.
+	•	If your rows are in formats like "7/4/2025 12:30 PM", normalize them once at load time.
+	3.	One place does the filtering
+	•	Don’t also slice by month somewhere else (e.g., “period” prefilter). If your loader or table registry still applies a fixed period or datePrefix, it will silently clamp your data to July.
+
+Minimal adjustments I recommend (no sweeping refactor)
+	•	Keep timeRanges.js as-is (it’s fine), but document expectations:
+	•	isWithinRange expects a Date, ISO, or "YYYY-MM-DD" string.
+	•	Always set both start and end.
+	•	All comparisons are local time.
+	•	Normalize once in the loader: when reading CSV, convert the field you filter on (e.g., "Order Date/Time") to a Date object and stash it on each row (e.g., row.__dt), then later call isWithinRange(row.__dt, range). That removes format ambiguity and speeds up filtering.
+	•	Pick a single filter method: Either rely on isWithinRange everywhere or consistently do a YYYY-MM-DD slice compare everywhere. Mixing both increases confusion.
+
+Quick checklist to proceed (focused on the time-panel goal)
+	1.	Loader: Verify it can open multiple months or a manifest list of files when range is present. (If not, that’s the real fix to make next.)
+	2.	Row date normalization: Ensure the loader attaches a reliable Date (e.g., __dt) for each row.
+	3.	Registry filter: Use isWithinRange(row.__dt, state.range) (or your slice method) in exactly one place—no extra “period” gating.
+	4.	UI contract: TimePanel must always stage and apply both start and end (you already do this with time/stageRange + time/applyPendingRange).
+
+If you want, I can review the loader next (the likeliest constraint) and point exactly where to add “multi-month” aggregation logic so the range can actually take effect.
+
+---------------------------------------
+
+5) loadRows.js
+
+What the file does now (key behaviors)
+	1.	Registry-driven paths (good):
+	•	Uses getDataPaths() to read your data/registry/index.json.
+	•	Maps app dataset "orders" → registry key (likely "orders_in_store").
+	•	Builds URLs like:
+/<base>/<YYYY>/<YYYY-MM>/<YYYY-MM_orders_in_store.csv> via joinOrderCsvPath.
+	•	Normalizes the URL to start with / (works with Vite dev server).
+	2.	Load modes (where the limit is):
+	•	If periods is provided → loads each month in that array and concatenates.
+	•	If period is provided → loads just that month.
+	•	If range is provided → it still loads only latest_period from the registry, then expects downstream trimming.
+This is the root of “July-only” when you pass a wide range—because you’re only loading the latest month’s CSV and there’s nothing earlier in memory to “trim” from.
+	3.	Errors & 404s:
+	•	fetchCsvRows throws on non-OK HTTP responses (e.g., file doesn’t exist). That’s fine in general, but if we start loading multiple months from a range, you’ll want graceful handling for missing months so a single 404 doesn’t blow up the whole range load.
+
+Why your range queries only show July
+
+Because the range branch:
+
+// Range supported (forward-compat): load latest; downstream will trim by range if needed
+if ((range?.start || range?.end) && latest) {
+  return loadMonth(latest);
+}
+
+…always loads just the registry’s latest_period (e.g., "2025-07"). There is no multi-month expansion based on the range provided. So the UI thinks it asked for a custom range, but the loader only ever fetched July, and downstream “filter by date” can’t include months that were never fetched.
+
+Minimal, surgical fix (single-file)
+
+Goal: When range is provided, compute the list of YYYY-MM months between range.start and range.end (inclusive), load all those CSVs (skipping missing ones), then concatenate and return.
+
+Key points for the change:
+	•	Keep the registry-driven path building intact.
+	•	Don’t change the period/periods behavior.
+	•	Make range tolerant of missing files (don’t crash on a 404).
+	•	Fall back to latest if the range is malformed / empty.
+
+---------------------------------------
+
+6) Analytics.jsx
+
+What this file is doing (and looks correct)
+	•	Tabs & panel UX
+	•	activeTab + isPanelOpen with the reopen timer gives you: first open = instant, switching tabs = roll up then down, clicking the same tab = close and do not auto‑reopen. Good.
+	•	TabDropPanel gets onClose, onApply, onReset. On apply you dispatch:
+	•	metrics/applyPending
+	•	time/applyPendingRange
+	•	then close/deselect. Matches the staged‑then‑commit model we discussed.
+	•	Context usage
+	•	You consume { state, dispatch, kpiId, selectedColumnKeys } from controlsContext.
+	•	columnKeys = ["Product Name", ...selectedColumnKeys]. That aligns with your “only show chosen KPI columns” behavior.
+	•	Data fetch
+	•	useEffect calls getTableForKPI(kpiId || "top_units_sold_prod", { … }).
+	•	Criteria passed:
+	•	period if state.mode === "period"
+	•	range if state.mode === "range"
+	•	limit, sort, and params.search (from state.productQuery)
+	•	This is the right contract given the registry we’ve been shaping.
+	•	Table render
+	•	GeneratedTable gets { columnKeys, rows: table?.rows ?? [], totals: table?.totals ?? {} }.
+	•	Placeholders (placeholderRows, placeholderCols) ensure the empty layout still looks intentional. Good.
+
+Likely pitfalls to verify (outside this file)
+	1.	Shape of state.range vs loader/filters
+	•	You pass range: { start: Date, end: Date } (coming from TimePanel → controlsContext).
+	•	In the registry path, applyDateAndLimit ends up calling isWithinRange(ymd, range).
+Make sure isWithinRange accepts a {start,end} where values may be Date or YYYY-MM-DD strings. If it only expects strings, convert in the reducer when committing the pending range (or inside isWithinRange).
+	•	Quick confirm: log state.range just before the fetch to see exact types: it should be {start: Date|String, end: Date|String} and both defined.
+	2.	KPI program’s measure labels vs your headers
+	•	Your column headers are the human labels ("Orders", "Units", "Net Revenue", "AOV").
+Ensure the table rows produced by the KPI path use exactly those keys so columns align. (From your earlier code, buildDisplayRow does set those exact labels—great. Just flagging this since a mismatch would render blank cells.)
+	3.	Default kpiId vs user expectations
+	•	Fallback is "top_units_sold_prod". That’s fine for now, but if Metrics panel is unchecked across the board, you’ll show only “Product Name” (by design). That’s expected.
+	4.	Search behavior
+	•	You pass params.search and also (previously) had a UI‑side filter fallback; in this version you rely on the registry to filter. That’s good—just confirm the registry actually uses params.search (case‑insensitive) at the row stage (you said it does).
+
+Minimal, safe checks (no code changes here)
+	•	In the browser console you already log:
+
+[Analytics→getTableForKPI] kpiId: <…> criteria: { mode, period, range, sortKey, sortDir, search }
+
+Add one more log temporarily before the fetch (and then remove later):
+	•	console.log("range types:", state.range && { start: typeof state.range.start, end: typeof state.range.end, startVal: state.range.start, endVal: state.range.end });
+	•	This will tell us if we’re pushing Date objects, strings, or null.
+
+	•	After fetch (still in the same effect), log:
+	•	console.log("[Analytics] rows:", t?.rows?.length, "cols:", (t?.columnKeys||[]).length);
+	•	That’ll confirm whether the pipeline is returning rows for the requested range.
+
+If the “only July loads” issue persists
+
+Based on this file, the bottleneck isn’t here. The usual culprits:
+	•	Manifest / loader scope: If your loader only loads a single month file (e.g., 2025-07_orders_in_store.csv), any custom range outside July will return nothing. We need the loader to aggregate across the manifest’s periods when criteria.range is present.
+	•	isWithinRange implementation: If it expects Y‑M‑D strings but gets Date objects (or vice‑versa), you’ll filter out everything. (This is the most common “range returns nothing” bug.)
+
+---------------------------------------
+
+7) controlsContext.jsx
+
+What this file does (correctly)
+	•	Centralizes UI state for the Analytics panels (products, metrics, time, etc.) in a React context with a reducer.
+	•	Supports staging vs applied state for:
+	•	Metrics via pendingMetricsVisible and actions:
+	•	metrics/stageInitIfNeeded, metrics/stageToggle, metrics/stageSetMany, metrics/applyPending, metrics/clearPending.
+	•	Time range via pendingRange and actions:
+	•	time/stageRange, time/applyPendingRange, time/clearPendingRange.
+	•	Exposes derived values:
+	•	kpiId (legacy KPI program compatibility).
+	•	selectedColumnKeys (B1/B2 visible headers derived from metrics visibility).
+	•	Product search wiring exists:
+	•	productQuery (debounced, drives table filter) and productQueryLive (UI echo).
+	•	Actions: products/setQuery, products/clearQuery, products/setQueryLive.
+
+Current defaults (intentional but important)
+	•	Time: mode: "range", period: null, range: null.
+	•	This means no data will load until a valid range or period is set—good for your “empty-by-default” testing.
+
+Integration assumptions you should confirm
+	•	MetricsPanel should:
+	•	Dispatch metrics/stageInitIfNeeded on mount/open.
+	•	Use metrics/stageToggle while the panel is open.
+	•	Rely on Tab footer Apply to dispatch metrics/applyPending.
+	•	Rely on footer Reset to dispatch metrics/clearPending (optional).
+	•	TimePanel should:
+	•	Dispatch time/stageRange as user types/sets dates.
+	•	On footer Apply, dispatch time/applyPendingRange.
+	•	On footer Reset, dispatch time/clearPendingRange.
+	•	TabDropPanel footer “Apply/Reset”:
+	•	Either (A) calls a registered per-panel apply()/reset() hook, or
+	•	(B) directly dispatches the appropriate .../applyPending / .../clearPending actions for the active tab.
+	•	Your current approach with onRegister is fine as long as each panel registers its apply() correctly.
+
+Potential pitfalls / small nits
+	1.	Action name mismatches
+	•	Panels must use the exact reducer action strings:
+	•	metrics/stageToggle (not metrics/pendingToggle)
+	•	metrics/stageInitIfNeeded, metrics/applyPending
+	•	time/stageRange, time/applyPendingRange
+	•	If MetricsPanel or TimePanel still dispatch older names, it’ll throw or be a no-op.
+	2.	Pending metrics fallback
+	•	selectedColumnKeys uses pendingMetricsVisible || metricsVisible.
+	•	This means while a metrics panel is open (pendings exist), headers will reflect staged values even before pressing Apply.
+	•	If you want headers to update only after Apply, derive selectedColumnKeys from applied state only (metricsVisible) and let the panel show staged checkboxes separately.
+	3.	Time range object shape
+	•	Reducer expects pendingRange as { start: Date|null, end: Date|null }.
+	•	Ensure the panel passes Date objects (not strings) into time/stageRange, and the loader’s filtering normalizes them to YYYY-MM-DD when comparing.
+	4.	Initial “empty” state
+	•	Because mode: "range" and range: null, your Analytics.jsx effect should gracefully handle undefined criteria (it looks like it does). Just confirm the loader doesn’t crash on missing period/range.
+	5.	productQueryLive usage
+	•	It’s available, but your current ProductPanel uses only products/setQuery (debounced). That’s fine. If you want a “live echo” somewhere else, wire productQueryLive too.
+
+Questions (to minimize assumptions)
+	•	Should selectedColumnKeys reflect pending choices (preview-as-you-tick) or applied only?
+	•	If “applied only,” I’ll change the selector to use metricsVisible exclusively and keep UI preview inside the panel.
+	•	For TimePanel, should pressing panel “Apply” also close the panel (current TabDropPanel behavior does), or do you want it to remain open to continue editing?
+	•	Do you want Reset (footer) to:
+	•	Clear both staged and applied states for the active tab, or
+	•	Only clear the staged values (keeping applied intact), or
+	•	Revert staged values back to last applied (no-op on applied)?
+
+---------------------------------------
+
+8) TimePanel.jsx
+
+What’s good (leave as‑is)
+	•	Clean local inputs (start, end) with normalizeYmd() → ✅ predictable YYYY-MM-DD.
+	•	Staging with dispatch({ type: "time/stageRange", value }) and committing via onRegister(() => dispatch({ type: "time/applyPendingRange" })) → ✅ matches your TabDropPanel “Apply” contract.
+	•	Reset logic wired to both pendingRange and resetNonce → ✅ panel resets reliably.
+	•	Visual validity hinting (red border when bad input) → ✅
+
+⸻
+
+One important integration check
+
+In your data pipeline, applyDateAndLimit() (in tableDataRegistry) compares table rows’ dates by slicing YYYY-MM-DD and calls isWithinRange(ymd, range). If your store is holding Date objects, that function may or may not accept them depending on its implementation. To avoid any mismatch/timezone edge cases, I recommend you stage strings ("YYYY-MM-DD") rather than Date objects here.
+
+Minimal change (2 lines)
+
+Change the two onSet handlers to stage strings:
+
+- onSet={(s) => stage({ start: new Date(s), end: state?.pendingRange?.end || null })}
++ onSet={(s) => stage({ start: s, end: state?.pendingRange?.end || null })}
+
+- onSet={(e) => stage({ start: state?.pendingRange?.start || null, end: new Date(e) })}
++ onSet={(e) => stage({ start: state?.pendingRange?.start || null, end: e })}
+
+This keeps the store’s pendingRange as { start: "YYYY-MM-DD" | null, end: "YYYY-MM-DD" | null }, which is exactly what your table filter code likes.
+
+If timeRanges.isWithinRange() currently expects Dates, you can still pass strings—just make sure that helper converts strings to comparable form (string compare on YYYY-MM-DD is fine if it normalizes).
+
+⸻
+
+Nice-to-have (tiny, safe usability polish)
+
+These don’t change behavior; they just smooth the UX:
+	1.	Press Enter to “Set”
+Add onKeyDown to each input so Enter triggers its “Set” button:
+
+onKeyDown={(e) => {
+  if (e.key === "Enter") {
+    const n = normalizeYmd(e.currentTarget.value);
+    if (isYmd(n)) onSet(n);
+  }
+}}
+
+
+	2.	Guard Apply when range is half-filled
+(Optional) If you want to prevent applying a half range, you can make the registered Apply function a no‑op unless both start and end exist and start <= end. That lives in the same useEffect where you call onRegister.
+
+useEffect(() => {
+  if (!onRegister) return;
+  onRegister(() => {
+    const pr = state.pendingRange;
+    if (pr?.start && pr?.end && pr.start <= pr.end) {
+      dispatch({ type: "time/applyPendingRange" });
+    }
+    // else: silently ignore or show a message (up to you)
+  });
+  return () => onRegister(null);
+}, [onRegister, dispatch, state.pendingRange]);
+
+(If you don’t want this constraint yet, skip it.)
+
+⸻

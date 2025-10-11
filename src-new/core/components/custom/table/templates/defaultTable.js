@@ -21,10 +21,20 @@ export function defaultTable(rawData = [], options = {}) {
   // Generate column keys (col_0, col_1, col_2, etc.)
   const columnKeys = Array.from({ length: gridCols }, (_, i) => `col_${i}`);
 
+  // Split into fixed (first column) and scrolling (rest)
+  const fixedColumns = [columnKeys[0]];
+  const scrollingColumns = columnKeys.slice(1);
+
   // Generate column labels (Column 1, Column 2, etc.)
   const columnLabels = {};
   columnKeys.forEach((key, i) => {
-    columnLabels[key] = `Column ${i + 1}`;
+    columnLabels[key] = `Drop Zone ${i + 1}`;
+  });
+
+  // Generate column widths
+  const columnWidths = {};
+  columnKeys.forEach((key, i) => {
+    columnWidths[key] = i === 0 ? firstColWidth : metricColWidth;
   });
 
   // Generate empty rows with drop zone cells
@@ -51,6 +61,9 @@ export function defaultTable(rawData = [], options = {}) {
     totals,
     columnKeys,
     columnLabels,
+    columnWidths,
+    fixedColumns,
+    scrollingColumns,
     styles: DEFAULT_STYLES,
     layout: {
       firstColWidth,

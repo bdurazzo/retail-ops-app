@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Discovery } from './pages/Discovery';
 import { Synthesis } from './pages/Synthesis';
 import { Toolbox } from './pages/Toolbox';
-import Assistant  from './pages/Assistant';
+import { Workspace } from './pages/Workspace';
 import Analytics from './pages/Analytics';
 
 // ✅ Tabler Icons — install if needed: npm i @tabler/icons-react
@@ -13,6 +13,8 @@ import {
   IconTool,
   IconDeviceDesktopAnalytics, // ADD THIS FOR TEST TAB
 } from '@tabler/icons-react';
+import PluginToolbar from './core/components/plugins/PluginToolbar';
+import TableToolbar from './core/components/module/table/container/TableToolbar';
 
 export default function App() {
   // Start on a tab that actually exists in the bottom bar
@@ -27,8 +29,8 @@ export default function App() {
         return <Synthesis />;
       case 'Toolbox':
         return <Toolbox />;
-      case 'Assistant':
-        return <Assistant />;
+      case 'Workspace':
+        return <Workspace />;
       case 'Analytics':
         return <Analytics />;
       default:
@@ -41,12 +43,12 @@ export default function App() {
     Discovery: IconBinoculars,
     Synthesis: IconFlask,
     Toolbox: IconTool,
-    Assistant: IconRobot,
+    Workspace: IconRobot,
     Analytics: IconDeviceDesktopAnalytics,
     Test: IconFlask, // ADD THIS
   };
 
-  const TABS = ['Discovery', 'Synthesis', 'Toolbox', 'Analytics', 'Assistant']; 
+  const TABS = ['Discovery', 'Synthesis', 'Toolbox', 'Analytics', 'Workspace']; 
 
   return (
     <div className="flex justify-center bg-gray-50 h-screen">
@@ -58,8 +60,6 @@ export default function App() {
 
         {/* 📄 Main Screen */}
         <div className="h-[738px] overflow-y-auto">
-          {/* 🛠️ Tool Bar */}
-          <div className="h-[50px] bg-gray-50 mt-2 rounded mx-4"></div>
           {renderScreen()}</div>
 
         {/* 🧭 Bottom Tab Bar */}

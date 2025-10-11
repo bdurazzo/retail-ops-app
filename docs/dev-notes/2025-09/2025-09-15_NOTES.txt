@@ -1,0 +1,16 @@
+ProductSearchCard.jsx
+
+---------------------------------
+
+SHORT LINED CRUISER
+SKU: FXXXXXXXXXX
+
+color: (all)
+(black)(dark tan)
+(military green)(service blue)(dark brown)
+(fired brick)(castor gray)
+
+size: (all)
+(XS)(S)(M)(L)(XL)(XXL)(XXXL)
+
+----------------------------------

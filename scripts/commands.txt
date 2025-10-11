@@ -1,0 +1,84 @@
+# Handy scraper commands (copy/paste one per scenario)
+
+# 1) Normal run (headless, fastest)
+HEADLESS=true DEBUG=false node scripts/scrape_orders_by_day.mjs
+
+# 2) Headed debug (watch it work, slower)
+HEADLESS=false SLOWMO=150 DEBUG=true node scripts/scrape_orders_by_day.mjs
+
+# 3) Diagnose tricky UI timing (extra slow + screenshots)
+HEADLESS=false SLOWMO=300 DEBUG=true SCREENSHOT=true node scripts/scrape_orders_by_day.mjs
+
+# 4) Save page state only (enable columns/filters manually, then press Enter)
+HEADLESS=false SLOWMO=150 DEBUG=true SAVE_STATE_ONLY=true node scripts/scrape_orders_by_day.mjs
+
+# 5) One-month focused run (useful for rollover issues)
+HEADLESS=false SLOWMO=200 DEBUG=true SCREENSHOT=true MAX_MONTHS=1 node scripts/scrape_orders_by_day.mjs
+
+# 6) Capture a debug log to file with timestamp
+mkdir -p runlogs && HEADLESS=false SLOWMO=200 DEBUG=true SCREENSHOT=true MAX_MONTHS=1 \
+node scripts/scrape_orders_by_day.mjs 2>&1 | tee "runlogs/$(date +%F_%H-%M-%S).log"
+
+# 7) Explicit July rollover check (two months window) with log
+NS_USERNAME="ben.durazzo@filson.com" NS_PASSWORD="BDbd6464555@" \
+HEADLESS=false SLOWMO=300 DEBUG=true SCREENSHOT=true MAX_MONTHS=2 \
+node scripts/scrape_orders_by_day.mjs 2>&1 | tee july-switch.log
+
+# 8) Force rebuild for a specific date (re-export even if files exist)
+FORCE_REBUILD_DATE=2025-07-01 HEADLESS=true node scripts/scrape_orders_by_day.mjs
+
+# 9) Force rebuild for all dates (use with care)
+FORCE_REBUILD=true HEADLESS=true node scripts/scrape_orders_by_day.mjs
+
+# 10) Storage state helpers (optional)
+# Backup current state: mv storageState.json storageState.bak
+# Make state read-only to avoid accidental overwrite: chmod a-w storageState.json
+# Re-enable writes later: chmod u+w storageState.json
+
+# 11) Viewport override (if columns are clipped on your display)
+VIEWPORT_WIDTH=1680 VIEWPORT_HEIGHT=1050 HEADLESS=false SLOWMO=150 DEBUG=true node scripts/scrape_orders_by_day.mjs
+
+# 12) Validate public vs scraper (month rollup)
+# Environment:
+#   START_MONTH=2023-11 END_MONTH=2025-07
+# Optional filters to align perspectives:
+#   PUBLIC_FILTER_FULFILLMENT=50003   # keep only public rows fulfilled by location 50003
+#   PUBLIC_FILTER_DEMAND="Portland"   # or keep only rows demanded at a given store/name
+# Optional perspective attribution (adds columns in summary without filtering):
+#   SCRAPER_PERSPECTIVE_FULFILLMENT=50003
+#   SCRAPER_PERSPECTIVE_DEMAND="Portland"
+# Writes reports under reports/validation/
+START_MONTH=2023-11 END_MONTH=2025-07 node scripts/validate_orders_vs_public.mjs
+PUBLIC_FILTER_FULFILLMENT=50003 START_MONTH=2024-12 END_MONTH=2024-12 node scripts/validate_orders_vs_public.mjs
+SCRAPER_PERSPECTIVE_FULFILLMENT=50003 SCRAPER_PERSPECTIVE_DEMAND="Portland" START_MONTH=2024-12 END_MONTH=2024-12 node scripts/validate_orders_vs_public.mjs
+
+# 13) Re-extract items for orders with placeholder lines (by month window)
+# Uses Playwright with saved storageState.json; writes CSVs under reports/reextract/YYYY-MM/
+# Example: re-extract December 2024
+START_MONTH=2024-12 END_MONTH=2024-12 HEADLESS=false SLOWMO=200 node scripts/reextract_placeholders.mjs
+
+# 14) Top 100 items by quantity (public vs scraper), plus normalized variant
+# - Uses scraper line-items quantity when present; public counts 1 per row
+# - Excludes placeholder rows like "Error - Store Purchase" by default
+#   (set INCLUDE_PLACEHOLDERS=true to include)
+# Outputs: 
+#   reports/validation/top_items_compare.csv
+#   reports/validation/top_items_compare_normalized.csv
+#   reports/validation/top_items_discrepancies_raw.csv
+#   reports/validation/top_items_discrepancies_normalized.csv
+START_MONTH=2023-11 END_MONTH=2025-07 TOP_N=100 node scripts/top_items_compare.mjs
+INCLUDE_PLACEHOLDERS=true START_MONTH=2023-11 END_MONTH=2025-07 TOP_N=100 node scripts/top_items_compare.mjs
+
+# 15) Orders present in both sources that have line-item discrepancies
+# Produces summary and a small sample of mismatched lines per order
+START_MONTH=2023-11 END_MONTH=2025-07 node scripts/find_overlap_item_discrepancies.mjs
+
+# 16) Public demand→fulfillment flow matrix (items and orders)
+# Tall CSVs to quantify cross-store routing per month
+START_MONTH=2023-11 END_MONTH=2025-07 node scripts/public_flow_matrix.mjs
+# 17) Publish scraper orders → retail monthly partitions + manifest
+# Scans orders_exports/YYYY/YYYY-MM per-day files and writes:
+#   public/data/retail/orders/YYYY/YYYY-MM/{orders.csv,line_items.csv}
+#   public/data/retail/orders/index.json (months, counts, revenue, checksums)
+#   public/data/retail/manifests/root.json (orders pointer)
+node scripts/publish/orders_rollup.mjs

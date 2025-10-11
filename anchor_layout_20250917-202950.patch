@@ -1,0 +1,333 @@
+diff --git a/src/pages/Analytics.jsx b/src/pages/Analytics.jsx
+index 81aea2de..bdf15c47 100644
+--- a/src/pages/Analytics.jsx
++++ b/src/pages/Analytics.jsx
+@@ -1,135 +1,212 @@
+-// ----------------------------------------------
+-// Analytics.jsx – Full dashboard UI shell layout
+-// ----------------------------------------------
++import React, { useState, useRef, useEffect } from "react";
+ 
+-import React, { useState, useEffect } from "react";
+-// Import React so we can write components and JSX
++import { useAnalyticsQuery } from "../features/analytics/hooks/useAnalyticsQuery";
++import { defaultQuery } from "../features/analytics/dtos/QueryDTO";
++
++// Visual shell components (UI only)
++import FilterPanel from "../features/analytics/components/panels/FilterPanel";
++import Chart from "../features/analytics/components/charts/Chart";
++import Table from "../features/analytics/components/tables/Table";
++import TabDisplay from "../features/analytics/components/displays/TabDisplay";
++import { PANEL_BY_TAB } from "../features/analytics/components/filters/index.js";
++
++// NEW: Visualization components
++import DataToolbar from "../features/analytics/components/visualization/DataToolbar";
++import DataView from "../features/analytics/components/visualization/DataView";
++import ControlPanel from "../features/analytics/components/panels/ControlPanel";
++// Phasing out FilterDropdown; use ControlPanelDropdown for both tabs and content
++import ControlPanelDropdown from "../features/analytics/components/displays/ControlPanelDropdown.jsx";
+ 
+-// Import all the visual shell components for the page
+-import ChartTabs from "../features/analytics/components/ChartTabs";
+-import TabDropPanel from "../features/analytics/components/TabDropPanel";
+-import AnalyticsChart from "../features/analytics/components/AnalyticsChart";
+-import GeneratedTable from "../features/analytics/components/GeneratedTable";
+-import { getTableForKPI } from "../features/analytics/registry/tableDataRegistry.js";
+ 
+ export default function Analytics() {
+-  // Functional React component — the core screen layout
+-  const [activeTab, setActiveTab] = useState("null");
+-  const [isPanelOpen, setIsPanelOpen] = useState(false);
+-  const [lastTab, setLastTab] = useState("TAB 1");
+-  const [table, setTable] = useState(null);
+-  const [err, setErr] = useState(null);
+-  const [sortKey, setSortKey] = useState("Net Revenue");
+-  const [sortDir, setSortDir] = useState("desc");
++  // --- Tabs + panel shell state (UI-only) ---
++  const [activeTab, setActiveTab] = useState(null);
++  const [isTabsOpen, setIsTabsOpen] = useState(false);
++  // const [isTabsOpen, setIsTabsOpen] = useState(false);
++  const reopenTimer = useRef(null);
++
++  // NEW: View toggle state
++  const [currentView, setCurrentView] = useState('table'); // 'table' or 'chart'
+ 
++  // --- localStorage-based query persistence ---
++  const [query, setQuery] = useState(() => {
++    try {
++      const saved = localStorage.getItem('analytics-query');
++      return saved ? JSON.parse(saved) : defaultQuery;
++    } catch (e) {
++      console.warn('Failed to parse saved query, using default');
++      return defaultQuery;
++    }
++  });
++
++  // Update localStorage when query changes
+   useEffect(() => {
+-    let alive = true;
+-    (async () => {
+-      try {
+-        const t = await getTableForKPI("top_aov_prod", {
+-          period: "2025-07",
+-          limit: 200,
+-          sort: { key: sortKey, dir: sortDir },
+-        });
+-        if (alive) setTable(t);
+-      } catch (e) {
+-        if (alive) setErr(e?.message || String(e));
++    localStorage.setItem('analytics-query', JSON.stringify(query));
++  }, [query]);
++
++  const { table, loading, error, meta } = useAnalyticsQuery(query);
++
++  console.log('Analytics component query state:', query);
++
++  // Bridge panel state/commands between dropdown panel and control strip
++  const [panelState, setPanelState] = useState({});
++  const [panelCommand, setPanelCommand] = useState(null);
++  const sendPanelCommand = (cmd) => setPanelCommand({ ...cmd, __ts: Date.now() });
++  const dropdownApiRef = useRef(null);
++
++  // NEW: Dynamic component mapping
++  const VIEW_COMPONENTS = {
++    table: Table,
++    chart: Chart
++  };
++
++  // NEW: View toggle handler
++  const handleViewToggle = (view) => {
++    setCurrentView(view);
++  };
++
++  // --- Click behavior for tabs (same UX, UI-only) ---
++  const handleSetActiveTab = (newTab) => {
++    // Do not roll the dropdown up/down; just toggle the active tab
++    if (reopenTimer.current) {
++      clearTimeout(reopenTimer.current);
++      reopenTimer.current = null;
++    }
++    if (newTab == null) {
++      setActiveTab(null);
++      return;
++    }
++    if (newTab === activeTab) {
++      setActiveTab(null);
++      return;
++    }
++    setActiveTab(newTab);
++  };
++
++  // --- Panel actions (no-op commits; just close UI) ---
++  const handleApply = async (applied) => {
++    console.log('Analytics handleApply received:', applied);
++    
++    if (reopenTimer.current) {
++      clearTimeout(reopenTimer.current);
++      reopenTimer.current = null;
++    }
++    setIsTabsOpen(false);
++    setActiveTab(null);
++
++    if (applied) {
++      console.log('Analytics updating query. Previous query:', query);
++      console.log('Analytics applying config:', applied.config);
++      setQuery((prev) => ({ ...prev, ...applied.config }));
++      console.log('Analytics setQuery called');
++    }
++  };
++  
++  const handleClose = () => {
++    if (reopenTimer.current) {
++      clearTimeout(reopenTimer.current);
++      reopenTimer.current = null;
++    }
++    setIsTabsOpen(false);
++    setActiveTab(null);
++  };
++
++  // --- Helper function to safely format missing months ---
++  const formatMissingMonths = (missing) => {
++    if (!missing || !Array.isArray(missing)) return "";
++    
++    return missing.map(m => {
++      // Handle both object and composite formats
++      if (typeof m === 'object' && m !== null) {
++        // Convert any Date objects or complex objects to strings
++        const yyyy = String(m.yyyy || '');
++        const mm = String(m.mm || '').padStart(2, '0');
++        return `${yyyy}-${mm}`;
+       }
+-    })();
+-    return () => { alive = false; };
+-  }, [sortKey, sortDir]);
+-  const handleSort = (key, dir) => {
+-    setSortKey(key);
+-    setSortDir(dir);
++      return String(m); // Fallback for primitive values
++    }).join(", ");
+   };
+ 
++  // --- Static table scaffold (no data) ---
++  // Show only the first column label; placeholderCols keeps the grid visible.
++  const columnKeys = ["Product Name"];
++
++  const PanelContent = activeTab ? (PANEL_BY_TAB[activeTab] || null) : null;
+   
++  const handleReset = () => {
++    // Clear all applied filters
++    setQuery(defaultQuery);
++    
++    // Close the menu
++    if (reopenTimer.current) {
++      clearTimeout(reopenTimer.current);
++      reopenTimer.current = null;
++    }
++    setIsTabsOpen(false);
++    setActiveTab(null);
++  };
+ 
+   return (
+-    <div className="h-full flex flex-col px-4 py-6 relative">
+-      {/* 
+-        h-full        → fills vertical space of parent container
+-        flex flex-col → stacks all children vertically
+-        px-4 py-6     → padding inside the page (1rem left/right, 1.5rem top/bottom)
+-        relative      → anchors dropdowns or overlays that position absolutely inside
+-      */}
+-
+-      {/* Page Title Header */}
+-      <h1 className="text-xl font-bold mb-4">Data Insights</h1>
+-      {/* 
+-        text-xl    → extra large text size (1.25rem)
+-        font-bold  → bold text weight
+-        mb-4       → margin below title (1rem)
+-      */}
+-
+-      {/* Chart Tab Bar + Drop Panel */}
+-      <div className="relative z-60 mb-6">
+-        {/* 
+-          relative → anchors the dropdown panel under the tabs
+-          z-40     → ensures this sits on top of charts or other elements
+-          mb-6     → spacing below (1.5rem)
+-        */}
+-
+-        {/* Static segmented tab bar */}
+-        <ChartTabs
+-          activeTab={activeTab}
+-          setActiveTab={(newTab) => {
+-            if (newTab === null) {
+-              // Case: reopen previously closed tab
+-              setActiveTab(lastTab);
+-              setIsPanelOpen(true);
+-            } else if (newTab === activeTab) {
+-              // Case: clicked same tab again → close
+-              setIsPanelOpen(false);
+-              setActiveTab(null);
+-            } else {
+-              // Always roll up, switch, then roll down — whether panel was open or not
+-              setActiveTab(newTab);
+-              setIsPanelOpen(false);
+-              setTimeout(() => {
+-                setLastTab(newTab);
+-                
+-                setIsPanelOpen(true);
+-              }, 150);
+-          }
+-        }}
+-        />
+-
+-        {/* Drop panel shell (shows content passed as children) */}
+-        <TabDropPanel 
+-          isOpen={isPanelOpen} 
+-          onClose={() => setIsPanelOpen(false)}>
+-          <div className="space-y-2">
+-            {/* 
+-              space-y-2 → vertical spacing between the two <p> tags (0.5rem)
+-            */}
+-            <p className="text-sm text-gray-500">Filters go here (static for now).</p>
+-            <p className="text-sm text-gray-500">Panel can later change based on tab.</p>
+-          </div>
+-        </TabDropPanel>
+-      </div>
++    <div className="h-full relative">
++      {/* TOP HALF CONTAINER - FULL SCREEN WIDTH */}
++      <div className="relative w-full bg-white" style={{ height: '55px' }}>
++        {/* Control Panel toolbar with center strip */}
++        <div className="flex-none">
++          <ControlPanel
++            activeTab={activeTab}
++            panelState={panelState}
++            onPanelCommand={sendPanelCommand}
++            onPanelStateChange={(update)=> setPanelState(prev=> ({...prev, ...update}))}
++            isOpen={isTabsOpen}
++            onToggleMenu={() => setIsTabsOpen((v) => !v)}
++            onToolbarApply={() => dropdownApiRef.current?.apply?.()}
++            onToolbarReset={() => dropdownApiRef.current?.reset?.()}
++          />
++        </div>
+ 
+-      {/* Analytics Chart Block */}
+-      <div className="mb-6">
+-        <AnalyticsChart />
+-        {/* 
+-          mb-6 → space below chart before table
+-        */}
++        {/* Dropdown that contains FilterPanel (tabs) and active panel content */}
++        <div className="flex-none" data-ignore-outside="true">
++          <ControlPanelDropdown
++            isOpen={isTabsOpen}
++            onClose={() => setIsTabsOpen(false)}
++            activeTab={activeTab}
++            setActiveTab={handleSetActiveTab}
++            panelProps={{ query }}
++            panelState={panelState}
++            onPanelStateChange={(update) => setPanelState((prev) => ({ ...prev, ...update }))}
++            panelCommand={panelCommand}
++            onApply={handleApply}
++            onReset={handleReset}
++            expose={(api) => { dropdownApiRef.current = api; }}
++          />
++        </div>
++        {/* FilterDropdown removed */}
++        {/* Left-side vertical FilterPanel removed; ControlPanelDropdown handles tabs */}
+       </div>
+ 
+-      {/* Table Block (scroll context managed by GeneratedTable) */}
+-      <div className="flex-1 relative">
+-        {/* Let GeneratedTable control its own internal scroll bounds. */}
+-        <div className="absolute inset-0">
+-          <GeneratedTable
+-            table={table || { columnKeys: [], rows: [], totals: {} }}
+-            sortKey={sortKey}
+-            sortDir={sortDir}
+-            onSort={handleSort}
++      {/* BOTTOM SECTION WITH PADDING */}
++      <div className="px-4">
++        {/* Toolbar - EXACTLY where it was before */}
++        <div className="mb-0">
++          <DataToolbar 
++            currentView={currentView}
++            onViewChange={handleViewToggle}
++          />
++        </div>
++
++        {/* Table - EXACTLY where it was before */}
++        <div className="mb-2">
++        <div style={{ height: 'h-max-610px' }}>
++          <DataView
++            currentView={currentView}
++            components={VIEW_COMPONENTS}
++            table={table ?? { columnKeys, rows: [], totals: {} }}
++            placeholderRows={12}
++            placeholderCols={4}
+           />
++          </div>
+         </div>
+       </div>
+     </div>
+-    
+   );
+-}
+\ No newline at end of file
++}

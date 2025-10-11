@@ -1,77 +1,78 @@
 /**
- * ColumnPlugin
+ * ColumnPlugin - Minimal Shell
  *
- * Renders a column as a nested table using productTable logic
- * Sections call this when cellState indicates data was dropped in a column
+ * Simple expand/collapse container matching TablePlugin aesthetic.
+ * You can customize the toolbar content and expanded content.
  */
 
-import React, { useState } from 'react';
-import { productTable } from '../../../custom/table/templates/productTable.js';
+import React from 'react';
+import Toolbar from '../../../../../components/Toolbar.jsx';
+import { MODULE_STYLES, MODULE_LAYOUT } from '../../../custom/table/tableProps.js';
+import { IconOutlet } from '@tabler/icons-react';
 
-/**
- * Check if column should use ColumnPlugin
- */
-export function shouldApplyColumnPlugin(columnKey, cellState = {}) {
-  // Check if any cell in this column has plugin data
-  return Object.keys(cellState).some(key => {
-    return key.endsWith(`_${columnKey}`) && cellState[key]?.type === 'product';
-  });
-}
-
-/**
- * Get plugin data for this column
- */
-export function getColumnPluginData(columnKey, cellState = {}) {
-  const cellKey = Object.keys(cellState).find(key =>
-    key.endsWith(`_${columnKey}`) && cellState[key]?.type === 'product'
-  );
-
-  return cellState[cellKey] || null;
-}
-
-/**
- * ColumnPlugin Component
- * Renders nested product table in a column
- */
 export default function ColumnPlugin({
-  columnKey,
+  row,
   cellState = {},
-  colWidth = 120,
-  rowHeight = 50,
+  onCellStateUpdate = () => {},
+  expandedRows = {},
+  toggleRowExpanded = () => {},
+  title = 'Column Plugin',
+  children,
   ...props
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const rowId = row?._rowId;
+  const isExpanded = expandedRows[rowId] || false;
 
-  const pluginData = getColumnPluginData(columnKey, cellState);
-
-  if (!pluginData) return null;
-
-  // Use productTable logic to transform data
-  const productData = pluginData.content || [];
-  const tableOutput = productTable(productData, pluginData.options || {});
+  const handleDragStart = (e) => {
+    const pluginData = {
+      type: 'column',
+      id: 'column-plugin',
+      label: 'Column',
+      title: title
+    };
+    e.dataTransfer.setData('text/plain', JSON.stringify(pluginData));
+    e.dataTransfer.effectAllowed = 'copy';
+  };
 
   return (
-    <div className="w-full h-full bg-white border-r border-gray-100">
-      {/* Collapsed toolbar view */}
-      <div
-        className="flex items-center justify-center px-2 cursor-pointer hover:bg-gray-50"
-        style={{ height: rowHeight }}
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <span className="text-xs text-gray-700 truncate">
-          {isExpanded ? '�' : '�'} {pluginData.title || 'Data'}
-        </span>
-      </div>
-
-      {/* Expanded nested table */}
-      {isExpanded && (
-        <div className="border-t border-gray-200 p-2">
-          <div className="text-xs text-gray-600">
-            {/* Mini table will render here using tableOutput */}
-            <pre className="text-[10px]">{JSON.stringify(tableOutput, null, 2)}</pre>
+    <div
+      className="w-full h-full flex items-center"
+      draggable
+      onDragStart={handleDragStart}
+    >
+      {/* Toolbar matching TablePlugin style */}
+      <Toolbar
+        height={MODULE_LAYOUT.rowHeight}
+        borderWidth={0}
+        shadowSize=""
+        paddingX={0}
+        backgroundColor="bg-gradient-to-r from-gray-100/100 via-transparent to-transparent"
+        className="w-full h-full pl-2 cursor-pointer hover:bg-gray-100 rounded-none"
+        leftContent={
+          <div
+            className="h-5 w-5 shadow bg-gradient-to-t from-gray-100 via-gray-50 to-gray-200 rounded"
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const data = e.dataTransfer.getData('text/plain');
+              console.log('Column plugin drop:', data);
+            }}
+          >
+            <div className="flex justify-center items-center h-full">
+              <IconOutlet size={14} />
+            </div>
           </div>
-        </div>
-      )}
+        }
+        centerContent={
+          <div className="flex-1 flex h-full w-full items-center pl-6">
+            <span className="text-[11px] truncate text-gray-600 font-medium">{title}</span>
+          </div>
+        }
+      />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import Table from '../../../components/Table.jsx';
 import Toolbar from '../../../components/Toolbar.jsx';
-import ToolbarPlugin from '../plugins/ToolbarPlugin.jsx';
+import ToolbarPlugin from '../plugins/PluginMode.jsx';
 import SortToolbar from '../SortToolbar.jsx';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { generateProductConfig, createGroupingConfig, detectBestGrouping, createCollapsedTable, createExpandedTable, getSortableColumns } from '../../config/dataConfig.js';

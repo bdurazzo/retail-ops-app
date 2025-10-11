@@ -1,0 +1,307 @@
+ANALYTICS ARCHITECTURE - QUICK REVIEW OUTLINE
+==============================================
+
+📚 EDUCATIONAL GUIDE FOR NEW DEVELOPERS
+This outline provides a learning path for developers new to this retail analytics codebase.
+
+==============================================
+🎯 WHAT YOU'RE LOOKING AT
+==============================================
+
+This is a React application that processes retail order data to generate analytics insights. Think of it as a sophisticated data pipeline that:
+
+1. Loads CSV files containing order data
+2. Filters and transforms the data based on user selections  
+3. Calculates business metrics (KPIs)
+4. Displays results in tables and charts
+
+The system is built like layers of an onion - each layer has a specific responsibility and talks only to adjacent layers.
+
+==============================================
+🏗️ THE BIG PICTURE - ARCHITECTURE LAYERS
+==============================================
+
+LAYER 1: UI COMPONENTS (What users see and click)
+├── Pages (Analytics.jsx, Store.jsx, etc.)
+├── Filter panels (Time picker, Product selector, Metric chooser)
+├── Data display (Tables, Charts)
+└── Status indicators (Loading, errors, missing data)
+
+LAYER 2: BUSINESS LOGIC (The "brains" that coordinate everything)  
+├── React hooks (useAnalyticsQuery - manages data fetching)
+├── Services (AnalyticsService - orchestrates the data pipeline)
+└── DTOs (Data Transfer Objects - ensure consistent data shapes)
+
+LAYER 3: DATA TRANSFORMATION (The "assembly line" that processes data)
+├── Time Adapter (Filters by date ranges)
+├── Product Adapter (Filters by products, colors, sizes)
+├── Metric Adapter (Calculates KPIs like revenue, quantity sold)
+└── Table Feeder (Formats data for UI display)
+
+LAYER 4: DATA ACCESS (How we get the raw data)
+├── Repositories (OrdersRepository, CatalogRepository)
+├── Path Resolution (Figures out which CSV files to load)
+├── HTTP Client (Actually fetches the files)
+└── CSV Parser (Converts text to JavaScript objects)
+
+LAYER 5: CORE INFRASTRUCTURE (The foundation everything builds on)
+├── Configuration (Where to find data files)
+├── Schemas (What the data should look like)
+├── Utilities (Helper functions for common tasks)
+└── Normalization (Converts data to consistent formats)
+
+==============================================
+🚀 FOLLOW THE DATA: A REQUEST JOURNEY  
+==============================================
+
+Imagine a user wants to see "Total Revenue for T-Shirts in July 2024":
+
+1. 🖱️ USER CLICKS: User selects time range (July 2024) and metric (Total Revenue)
+   📍 Location: src/pages/Analytics.jsx
+   💡 What happens: UI state updates, query object created
+
+2. 🎯 HOOK TRIGGERS: useAnalyticsQuery detects query change
+   📍 Location: src/features/analytics/hooks/useAnalyticsQuery.js  
+   💡 What happens: Hook normalizes query and calls service
+
+3. 🎼 SERVICE ORCHESTRATES: AnalyticsService coordinates the pipeline
+   📍 Location: src/features/analytics/services/AnalyticsService.js
+   💡 What happens: Calls repository, then applies adapters in sequence
+
+4. 📁 REPOSITORY LOADS DATA: OrdersRepository fetches July 2024 CSV files
+   📍 Location: src/features/analytics/repositories/OrdersRepository.js
+   💡 What happens: Discovers file paths, downloads CSVs, parses to objects
+
+5. 🔄 ADAPTERS TRANSFORM DATA: Three adapters run in sequence:
+   - Time Adapter: Keeps only July dates
+   - Product Adapter: Filters for T-Shirts  
+   - Metric Adapter: Calculates total revenue
+   📍 Locations: src/features/analytics/adapters/*/
+   💡 What happens: Data gets progressively filtered and enriched
+
+6. 🎨 FEEDER FORMATS FOR UI: tableFeeder makes data table-ready
+   📍 Location: src/features/analytics/feeders/tableFeeder.js
+   💡 What happens: Adds display labels, calculates totals, formats columns
+
+7. 📊 COMPONENTS RENDER: Table shows the results
+   📍 Location: src/features/analytics/components/tables/Table.jsx
+   💡 What happens: User sees filtered T-shirt revenue data
+
+==============================================
+🎓 LEARNING PATH FOR NEW DEVELOPERS
+==============================================
+
+WEEK 1: UNDERSTAND THE STRUCTURE
+- Start with src/pages/Analytics.jsx - this is your entry point
+- Trace how clicking a filter leads to data changes
+- Look at src/features/analytics/dtos/QueryDTO.js to understand data shapes
+- Read the detailed architecture document for deeper context
+
+WEEK 2: FOLLOW THE DATA PIPELINE  
+- Study src/features/analytics/services/AnalyticsService.js - the conductor
+- Understand how src/features/analytics/hooks/useAnalyticsQuery.js manages state
+- Trace a request through the repository layer
+- See how CSV files become JavaScript objects
+
+WEEK 3: MASTER THE ADAPTERS
+- Examine each adapter in src/features/analytics/adapters/
+- Understand how time filtering works with date strings
+- Learn how KPI calculations aggregate data
+- See how the metric adapter handles data grouping
+
+WEEK 4: EXTEND THE SYSTEM
+- Try adding a new KPI to src/features/analytics/adapters/metric/kpis/
+- Create a new filter panel component  
+- Add a new data source configuration
+- Experiment with different table columns
+
+==============================================
+🔍 KEY CONCEPTS TO UNDERSTAND
+==============================================
+
+1. SEPARATION OF CONCERNS
+   Each layer has one job. UI components don't know about CSV parsing. 
+   Data loaders don't know about React. This makes code easier to test and change.
+
+2. ADAPTER PATTERN
+   Adapters transform data from one format to another. They're like translators
+   between different parts of the system. This makes adding new data sources easy.
+
+3. REACTIVE DATA FLOW
+   When a query changes, React hooks automatically trigger data loading.
+   The UI updates when new data arrives. This creates a smooth user experience.
+
+4. ERROR RESILIENCE
+   The system handles missing data files, network errors, and malformed data
+   gracefully. Users see helpful messages instead of broken screens.
+
+5. CONFIGURATION DRIVEN
+   File paths, data schemas, and display labels are configurable.
+   This makes the system adaptable to different data sources and requirements.
+
+==============================================
+🛠️ COMMON TASKS & WHERE TO FIND THEM
+==============================================
+
+ADDING A NEW KPI:
+1. Create calculator function in src/features/analytics/adapters/metric/kpis/newKpi.js
+2. Export it from src/features/analytics/adapters/metric/kpis/index.js
+3. Add display logic in src/features/analytics/feeders/tableFeeder.js
+4. Add column configuration in src/features/analytics/adapters/metric/utils/columnConfig.js
+
+ADDING A NEW FILTER:
+1. Create adapter function in src/features/analytics/adapters/newFilter/
+2. Add it to the pipeline in src/features/analytics/services/AnalyticsService.js
+3. Create UI component in src/features/analytics/components/panels/tabs/
+4. Wire it up in src/features/analytics/components/panels/tabs/index.js
+
+CHANGING DATA SOURCES:
+1. Update configuration in src/core/config/dataSources.js
+2. Modify repository in src/features/analytics/repositories/
+3. Update normalization logic in src/core/utils/ if needed
+
+DEBUGGING DATA ISSUES:
+1. Check browser console - repositories log loading details
+2. Look at network tab to see which files are being requested
+3. Examine the query object in React dev tools
+4. Use debugger statements in adapter functions to inspect data flow
+
+==============================================
+🚨 COMMON GOTCHAS FOR NEW DEVELOPERS
+==============================================
+
+1. ASYNC DATA LOADING
+   Data loading is asynchronous. Components render before data arrives.
+   Always check if data exists before using it: `data?.length`
+
+2. DATE FORMATTING  
+   The system uses YYYY-MM-DD strings, not Date objects.
+   Be careful with timezone conversions (EDT to PDT).
+
+3. ADAPTER SEQUENCE MATTERS
+   Adapters run in a specific order: Time → Product → Metric
+   Each adapter receives the output of the previous one.
+
+4. REACT STATE UPDATES
+   Query changes trigger re-renders. Use useEffect dependencies carefully
+   to avoid infinite loops. JSON.stringify helps with object comparisons.
+
+5. CSV DATA QUIRKS
+   Real CSV data has missing fields, inconsistent formatting, and edge cases.
+   Always provide fallbacks: `row['Product Net'] || 0`
+
+==============================================
+🔬 DEBUGGING TECHNIQUES
+==============================================
+
+1. USE CONSOLE LOGS
+   The repositories already have extensive logging. Check browser console
+   to see which files are loading and what data is returned.
+
+2. REACT DEV TOOLS
+   Install React Developer Tools browser extension to inspect component state
+   and hook values. Very helpful for understanding data flow.
+
+3. NETWORK TAB
+   Check which CSV files are being requested and their response status.
+   404 errors indicate missing data files.
+
+4. BREAKPOINT DEBUGGING
+   Add `debugger;` statements in adapter functions to step through data
+   transformations line by line.
+
+5. DATA INSPECTION
+   Add temporary `console.log(data)` statements to see data at each pipeline stage.
+   Remove before committing code.
+
+==============================================
+🎨 EXTENDING THE SYSTEM
+==============================================
+
+The architecture makes it easy to add new features:
+
+NEW VISUALIZATION:
+- Add component to src/features/analytics/components/charts/
+- Create feeder function to format data for the chart
+- Wire into main Analytics page
+
+NEW DATA SOURCE:
+- Add configuration to src/core/config/dataSources.js
+- Create new repository in src/features/analytics/repositories/
+- Add normalization logic if data format differs
+
+NEW BUSINESS LOGIC:
+- Add service functions to src/features/analytics/services/
+- Create new adapters for data transformations
+- Extend DTOs for new data shapes
+
+NEW FILTER TYPE:
+- Create adapter in src/features/analytics/adapters/
+- Add UI panel component
+- Update query DTO to handle new filter parameters
+
+==============================================
+💡 ARCHITECTURE PRINCIPLES
+==============================================
+
+This codebase follows several key principles that make it maintainable:
+
+1. SINGLE RESPONSIBILITY
+   Each file/function has one clear purpose. Easy to understand and test.
+
+2. DEPENDENCY INVERSION  
+   High-level components don't depend on low-level details. Services depend
+   on repository interfaces, not concrete implementations.
+
+3. OPEN/CLOSED PRINCIPLE
+   Open for extension (easy to add new KPIs) but closed for modification
+   (don't need to change existing code).
+
+4. LAYERED ARCHITECTURE
+   Clear boundaries between presentation, business logic, and data access.
+   Changes in one layer don't ripple through others.
+
+5. CONFIGURATION OVER CONVENTION
+   Behavior is driven by configuration files rather than hardcoded values.
+   Makes the system adaptable to different requirements.
+
+==============================================
+🎯 NEXT STEPS FOR LEARNING
+==============================================
+
+After understanding this outline:
+
+1. READ THE DETAILED DOCUMENT
+   The full architecture document has complete code examples and technical details.
+
+2. EXPLORE THE CODEBASE
+   Follow the file paths mentioned here. Read the code with this outline as a guide.
+
+3. MAKE A SMALL CHANGE  
+   Try adding a simple KPI or changing a display label. See how the change
+   propagates through the system.
+
+4. ASK QUESTIONS
+   The codebase has good separation of concerns, but complex business domains
+   always have edge cases. Don't hesitate to ask about specific implementations.
+
+5. CONTRIBUTE IMPROVEMENTS
+   Once you understand the patterns, you can help improve documentation,
+   add tests, or implement new features following the established architecture.
+
+==============================================
+📖 ADDITIONAL RESOURCES
+==============================================
+
+- React Hooks Documentation: Understanding useEffect and useState patterns
+- CSV Processing: Papa Parse library documentation  
+- Date Handling: Day.js library for date manipulation
+- Architecture Patterns: Layered Architecture and Adapter Pattern
+- Testing: Jest and React Testing Library for component testing
+
+==============================================
+END OF QUICK REVIEW OUTLINE
+==============================================
+
+Remember: The best way to learn a codebase is to make changes and see what happens.
+Start small, follow the patterns you see, and don't be afraid to experiment!

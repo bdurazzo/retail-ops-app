@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import ProductSearch from "../features/discovery/components/ProductSearch.jsx";
 import { loadAllTimeLineItemsData, loadAllTimeProductData } from "../core/services/dataService.js";
-import TableWorkspace from "../core/components/custom/table/TableWorkspace.jsx";
+import TableWorkspace from "../core/components/custom/table/CustomTableWorkspace.jsx";
 
 export function Synthesis() {
   // Load all-time line items data for search functionality
@@ -67,12 +67,10 @@ export function Synthesis() {
   };
 
   return (
-    <div className="h-[680px] flex flex-col">
+    <div className="h-[640px] flex flex-col">
       {/* Page Header */}
-      <div className="flex-none px-4 py-6">
-        <h1 className="text-xl font-bold text-gray-900">Synthesis</h1>
-        <p className="text-sm text-gray-600 mt-1">Search for products and explore with nested tables</p>
-        {loading && <p className="text-xs text-blue-600 mt-1">Loading product data...</p>}
+      <div className="flex-none px-4 py-2">
+
       </div>
 
       {/* ProductSearch Component */}
@@ -88,7 +86,7 @@ export function Synthesis() {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 min-h-0 px-4 pb-6">
+      <div className="flex-1 min-h-0 px-4 pb-2">
         <div className="h-full bg-gray-50 rounded p-2">
           <div className="h-96">
             <TableWorkspace />

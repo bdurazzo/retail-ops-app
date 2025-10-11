@@ -1,0 +1,15 @@
+How many years of data (rough date range)?
+
+    three years from present date.
+
+Average orders per day/month?
+
+    20-30 orders per day.
+
+Any rate limiting or anti-bot measures I should be aware of?
+
+    undetermined, potentially.
+
+How often this needs to run (daily updates vs. one-time historical extraction)?
+
+    daily updates after successful one time historical extraction.

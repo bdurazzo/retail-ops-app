@@ -1,0 +1,476 @@
+{
+  "cookies": [
+    {
+      "name": "AUTH_SESSION_ID",
+      "value": "78ac10b1-59ec-48ee-897e-57cfb2126c2e.keycloak-0-40085",
+      "domain": "id.p.newstore.net",
+      "path": "/auth/realms/filson/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "AUTH_SESSION_ID_LEGACY",
+      "value": "78ac10b1-59ec-48ee-897e-57cfb2126c2e.keycloak-0-40085",
+      "domain": "id.p.newstore.net",
+      "path": "/auth/realms/filson/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "KEYCLOAK_IDENTITY",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJkYjQxZWIzMi03Y2Y2LTQ2ZDQtODI4OC0wNmViNThhNjRjOTcifQ.eyJleHAiOjE3NTk4OTk1NDgsImlhdCI6MTc1OTI5NDc0OCwianRpIjoiYWEzY2VlM2YtOTNiNS00MTA5LWIyMzEtMmI2YWZhNTRkY2UyIiwiaXNzIjoiaHR0cHM6Ly9pZC5wLm5ld3N0b3JlLm5ldC9hdXRoL3JlYWxtcy9maWxzb24iLCJzdWIiOiJmOTkwZmViZi1mMDU1LTRhODQtOGUwZS0wZTVkMDc1NTM4MTMiLCJ0eXAiOiJTZXJpYWxpemVkLUlEIiwic2Vzc2lvbl9zdGF0ZSI6Ijc4YWMxMGIxLTU5ZWMtNDhlZS04OTdlLTU3Y2ZiMjEyNmMyZSIsInNpZCI6Ijc4YWMxMGIxLTU5ZWMtNDhlZS04OTdlLTU3Y2ZiMjEyNmMyZSIsInN0YXRlX2NoZWNrZXIiOiJoZXpLS1R1ZTg2MkNycWstTkdNdFFtNEhoVFd3WF84Smt6bXZUaV9LQUtzIn0.ONHcQE_5DmNNluFYF6RNPQHFIl-lvREitc8XxTxHywY",
+      "domain": "id.p.newstore.net",
+      "path": "/auth/realms/filson/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "KEYCLOAK_IDENTITY_LEGACY",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJkYjQxZWIzMi03Y2Y2LTQ2ZDQtODI4OC0wNmViNThhNjRjOTcifQ.eyJleHAiOjE3NTk4OTk1NDgsImlhdCI6MTc1OTI5NDc0OCwianRpIjoiYWEzY2VlM2YtOTNiNS00MTA5LWIyMzEtMmI2YWZhNTRkY2UyIiwiaXNzIjoiaHR0cHM6Ly9pZC5wLm5ld3N0b3JlLm5ldC9hdXRoL3JlYWxtcy9maWxzb24iLCJzdWIiOiJmOTkwZmViZi1mMDU1LTRhODQtOGUwZS0wZTVkMDc1NTM4MTMiLCJ0eXAiOiJTZXJpYWxpemVkLUlEIiwic2Vzc2lvbl9zdGF0ZSI6Ijc4YWMxMGIxLTU5ZWMtNDhlZS04OTdlLTU3Y2ZiMjEyNmMyZSIsInNpZCI6Ijc4YWMxMGIxLTU5ZWMtNDhlZS04OTdlLTU3Y2ZiMjEyNmMyZSIsInN0YXRlX2NoZWNrZXIiOiJoZXpLS1R1ZTg2MkNycWstTkdNdFFtNEhoVFd3WF84Smt6bXZUaV9LQUtzIn0.ONHcQE_5DmNNluFYF6RNPQHFIl-lvREitc8XxTxHywY",
+      "domain": "id.p.newstore.net",
+      "path": "/auth/realms/filson/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "KEYCLOAK_SESSION",
+      "value": "filson/f990febf-f055-4a84-8e0e-0e5d07553813/78ac10b1-59ec-48ee-897e-57cfb2126c2e",
+      "domain": "id.p.newstore.net",
+      "path": "/auth/realms/filson/",
+      "expires": 1759899548.666637,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "KEYCLOAK_SESSION_LEGACY",
+      "value": "filson/f990febf-f055-4a84-8e0e-0e5d07553813/78ac10b1-59ec-48ee-897e-57cfb2126c2e",
+      "domain": "id.p.newstore.net",
+      "path": "/auth/realms/filson/",
+      "expires": 1759899548.666679,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "ki_r",
+      "value": "",
+      "domain": "manager.filson.p.newstore.net",
+      "path": "/",
+      "expires": 1793854750.285352,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "x-ms-gateway-slice",
+      "value": "estsfd",
+      "domain": "login.microsoftonline.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "stsservicecookie",
+      "value": "estsfd",
+      "domain": "login.microsoftonline.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "AADSSO",
+      "value": "NA|NoExtension",
+      "domain": ".login.microsoftonline.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "MicrosoftApplicationsTelemetryDeviceId",
+      "value": "efe3617e-40df-47e7-a498-2e494020d889",
+      "domain": "login.microsoftonline.com",
+      "path": "/",
+      "expires": 1790830747.121609,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "brcap",
+      "value": "0",
+      "domain": ".login.microsoftonline.com",
+      "path": "/",
+      "expires": 1792990743,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "MC1",
+      "value": "GUID=9e4b0082e8b64570bff28148d04a84b9&HASH=9e4b&LV=202509&V=4&LU=1756799647351",
+      "domain": ".microsoft.com",
+      "path": "/",
+      "expires": 1788335647.370055,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "MSFPC",
+      "value": "GUID=9e4b0082e8b64570bff28148d04a84b9&HASH=9e4b&LV=202509&V=4&LU=1756799647351",
+      "domain": "login.microsoftonline.com",
+      "path": "/",
+      "expires": 1788335647.37316,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ESTSAUTHLIGHT",
+      "value": "+0089aa49-7adf-6e90-e733-23aa4652e1a4",
+      "domain": "login.microsoftonline.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "fpc",
+      "value": "AgyJFO8QWUJOrZuoPQ7XVgY",
+      "domain": "device.login.microsoftonline.com",
+      "path": "/",
+      "expires": 1761886746.636847,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "x-ms-gateway-slice",
+      "value": "estsfd",
+      "domain": "device.login.microsoftonline.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "stsservicecookie",
+      "value": "estsfd",
+      "domain": "device.login.microsoftonline.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "AMP_MKTG_1635bb8ce6",
+      "value": "JTdCJTdE",
+      "domain": ".newstore.net",
+      "path": "/",
+      "expires": 1788406161,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "esctx-nOZhirWS900",
+      "value": "AQABCQEAAABlMNzVhAPUTrARzfQjWPtK3ou80g8-gzgn5spwlb64w8kajprMfjMU3oPATrC9ceptBfkkBKh0iETPDiQ-olr_OmIWz2pQDGqsvW2r-chnT-iY9mFLMd5zAXkW7YgqJHcgCFRL6tEZ_UPbJPK1ejvf3gWiKhOXN2Bwf3YFVte02iAA",
+      "domain": ".login.microsoftonline.com",
+      "path": "/",
+      "expires": 1759296242.917467,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "wlidperf",
+      "value": "FR=L&ST=1759294745306",
+      "domain": ".microsoftonline.com",
+      "path": "/",
+      "expires": 1792990745,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "esctx-c4K3zTC4BTI",
+      "value": "AQABCQEAAABlMNzVhAPUTrARzfQjWPtKnhszB5BGyJlzKhDdl8QQKTP2enqpfOeXBMf65KkhOmo6qpctPP3huNMx53kLUd0ma8wshDt9kTqmwEXWwtvJXPRgI9wh5UgvdGZe9ecMwAFsGSX63MTHD8EMFlzhPagCNyCXroXWU6w0wRW3ZrK1zyAA",
+      "domain": ".login.microsoftonline.com",
+      "path": "/",
+      "expires": 1759296245.706168,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "MS0",
+      "value": "ab2d351c1f4e45cbbd8c12a95d71e41d",
+      "domain": ".microsoft.com",
+      "path": "/",
+      "expires": 1759296546.334539,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "esctx",
+      "value": "PAQABBwEAAABlMNzVhAPUTrARzfQjWPtKBGsAEbpeRGPaDLW4zJJ_M7Gl6QfojsGWs61ALUvho_e0VaGoI_NlxkYxer_EkZ_OW2ZDbzfPN8-QKJLS05pbN5vn2q9c3lmIavu43LqZ1l9G-89cTVzSxt1hT5XIQl1rHESW6gc-y_LmOTKBQgM5ukUe8X4nn3Bv_OwPlNo0aoEgAA",
+      "domain": ".login.microsoftonline.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "esctx-4iQV5zqPlIs",
+      "value": "AQABCQEAAABlMNzVhAPUTrARzfQjWPtK4SC_Ms2sY58e2p1zDBfl-nj72PS2IXlUk7N_3XgAPKmhXQru304Npd5AKaXvOSylBYh6vQT73xQcBV5nHJm9GCYBxhbhzYJvXIpMVWZpBKeHtQ87wkHgEAG9GTEzZQeqoubw0eAn75KBUpslQiyWqyAA",
+      "domain": ".login.microsoftonline.com",
+      "path": "/",
+      "expires": 1759296246.942129,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "uaid",
+      "value": "b0291efbf17a401b830e78967997652a",
+      "domain": ".login.live.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "MSPRequ",
+      "value": "id=N&lt=1759294747&co=1",
+      "domain": ".login.live.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ESTSAUTHPERSISTENT",
+      "value": "1.ARwAqgQwH4XfGk-x1gV334CaCEQBNlaau1tKp8FTXHr0bc3OAAAcAA.AgABFwQAAABlMNzVhAPUTrARzfQjWPtKAwDs_wUA9P9DqhaDQaKgPu_Vp0JEQ8ordgF2JCgWf9xt1UHmbGhPFC9kn58VG-rghXJLb-7AcHQSIA-V5W_pn-bFdsEUtalcVKnjMhQMDQwHRkk2xvUT1dmifjY4NfSF18B1xYpXWTGqL19WYMouDcpgtvKzWLLh3JB1yg07GHpJJzgs__DIcyNoPiFw1Jjn3rCqhMY4CiHvYvEq_Dl8GnulADTnx3sv5aoxKb6EgQsaiuVgcJMb8UDh92Cie-cRML5Vvp6pP0v48FmFgaG3PcIpZ1hjq3-w7mVHYOJNumnCJAIggtHJa4It1QbYMj3a7A9QsMi8Y5Cs9oCLlkR_rsDqE64OUmo7FT_2UyDSIzlm3pBOEcZz909N05JdxCYV03gk9agERR7AJOBLUPxJd9zWqc9XZK8cmzcP6o4QE8-M4RuNdfFcgVLWPZ2PFZmSI0FvBagj7OhMHbba5ylLOlb-T1oyPcmcd9YyiQ9gSULmAqu-1vuA0enj7kAEgjeA9Y-PiMoLnTyerALAQBug9X8pRYQKb4wRmet7twh1LzMqKFiXiU2HFrk-LwW6Y9FygO4R92s11OJRAsfg1IE8cPBp281Zq1MvHECeVOjuXZvco3rzs-HoT7u39tUMuGT6iIDnZFhgGSFQgBLbx0rS52vFW17Cqt1GDtylP5BdWXwFA4BccRw7RJtnLJcgnFSCpNrQR4FEFrEBCt7K6FPfUyCutPENwPEnL-Rc",
+      "domain": ".login.microsoftonline.com",
+      "path": "/",
+      "expires": 1767070747.582627,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ESTSAUTH",
+      "value": "1.ARwAqgQwH4XfGk-x1gV334CaCEQBNlaau1tKp8FTXHr0bc3OAAAcAA.AgABFwQAAABlMNzVhAPUTrARzfQjWPtKAwDs_wUA9P_x4-C6ryT47_YxbhQGFZCC_Mv06xmRT1g0nlrEPcqEdi9HZK3pE0hHVI6kRMFvaFcO-LIysPzSUlzE",
+      "domain": ".login.microsoftonline.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "buid",
+      "value": "1.ARwAqgQwH4XfGk-x1gV334CaCEQBNlaau1tKp8FTXHr0bc3OAAAcAA.AQABGgEAAABlMNzVhAPUTrARzfQjWPtKqChXKSjdEBGROGz_5XGvcgeq598xEzAY8G2OD5ye6TOiJkQZlCd8aKz9tonnMcbKBppQdoLywVK_r46NYCOcnxxR2Psf69AmGEJI2J0M6KycJTUHIo8TsxbVbIYjTAX12U91CLNOyx-EVCuDuXGjNOAc1LrIc_6zLYgrjGsZnEAgAA",
+      "domain": "login.microsoftonline.com",
+      "path": "/",
+      "expires": 1761886747.582697,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "CCState",
+      "value": "RWhJS0VQVFFuWkhHcmVkRGhrWUh5UmJ4T0tNPQ==",
+      "domain": ".login.microsoftonline.com",
+      "path": "/",
+      "expires": 1760158747.582723,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "SignInStateCookie",
+      "value": "CAgABFgIAAABlMNzVhAPUTrARzfQjWPtKAwDs_wUA9P8qIqZMleCkwyMfbmxXA8DdCVYMXZHOGLK0FVs_183K81fn4iQj4ORuXEW86-Cw3r6wfRUyrW3mkyJg6xZrXIFcUIoeZ82SIr24ipn9pSPx4szo-seTQ6QYvx0aTIbDnJkzMqtCe_dbdCOyNnxq4dgHBMFmkvOT6bNlO-QJpeL3cowpFNgYkbB-i3VXvqyp_ZKUTcMIn2p-ujkJ2dNBmAV5tXNwCtJRhLaoYjMDrhI3ZzIK8CTPiWsd6dn4Mp54gjGbO-2tdAbh",
+      "domain": ".login.microsoftonline.com",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "fpc",
+      "value": "ApVEbWkOCLNMkbTnkVfBBhhMIgYDAQAAABasbuAOAAAA-zvwKgEAAAAYrG7gDgAAANI2JvMCAAAAGqxu4A4AAAA",
+      "domain": "login.microsoftonline.com",
+      "path": "/",
+      "expires": 1761886747.582757,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ai_session",
+      "value": "RMyVcV44N48y0YdQRtphyZ|1759294743992|1759294747825",
+      "domain": "login.microsoftonline.com",
+      "path": "/",
+      "expires": 1759296547,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "ki_t",
+      "value": "1756799636886%3B1759294729530%3B1759294750285%3B8%3B29410",
+      "domain": "manager.filson.p.newstore.net",
+      "path": "/",
+      "expires": 1793854750.285164,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_gid",
+      "value": "GA1.2.1697547900.1759294751",
+      "domain": ".newstore.net",
+      "path": "/",
+      "expires": 1759381150,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_gat",
+      "value": "1",
+      "domain": ".newstore.net",
+      "path": "/",
+      "expires": 1759294810,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_ga",
+      "value": "GA1.1.123215562.1756799677",
+      "domain": ".newstore.net",
+      "path": "/",
+      "expires": 1793854750.739714,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_ga_FKN9C2Z2NH",
+      "value": "GS2.1.s1759294750$o13$g1$t1759294750$j60$l0$h0",
+      "domain": ".newstore.net",
+      "path": "/",
+      "expires": 1793854750.744235,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "AMP_1635bb8ce6",
+      "value": "JTdCJTIyZGV2aWNlSWQlMjIlM0ElMjIyOTlkMWFmYi0yMjVjLTRkOTctYmNiNi1hZDMyY2UyODQ4MGQlMjIlMkMlMjJ1c2VySWQlMjIlM0ElMjJmOTkwZmViZi1mMDU1LTRhODQtOGUwZS0wZTVkMDc1NTM4MTMlMjIlMkMlMjJzZXNzaW9uSWQlMjIlM0ExNzU5Mjk0NzUxNTAzJTJDJTIyb3B0T3V0JTIyJTNBZmFsc2UlMkMlMjJsYXN0RXZlbnRUaW1lJTIyJTNBMTc1OTI5NDc1MjQ1NyUyQyUyMmxhc3RFdmVudElkJTIyJTNBMjAwMTEyJTJDJTIycGFnZUNvdW50ZXIlMjIlM0EzJTdE",
+      "domain": ".newstore.net",
+      "path": "/",
+      "expires": 1790830752,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://manager.filson.p.newstore.net",
+      "localStorage": [
+        {
+          "name": "Ki71GB4qh5_appauth_authorization_service_configuration",
+          "value": "{\"authorization_endpoint\":\"https://id.p.newstore.net/auth/realms/filson/protocol/openid-connect/auth\",\"token_endpoint\":\"https://id.p.newstore.net/auth/realms/filson/protocol/openid-connect/token\",\"revocation_endpoint\":\"https://id.p.newstore.net/auth/realms/filson/protocol/openid-connect/revoke\",\"end_session_endpoint\":\"https://id.p.newstore.net/auth/realms/filson/protocol/openid-connect/logout\",\"userinfo_endpoint\":\"https://id.p.newstore.net/auth/realms/filson/protocol/openid-connect/userinfo\"}"
+        },
+        {
+          "name": "earlyAccess.orderDetails.filson.p",
+          "value": "null"
+        },
+        {
+          "name": "lV9S6f6s5K_appauth_authorization_request",
+          "value": "{\"response_type\":\"code\",\"client_id\":\"newstore-omnichannel-manager\",\"redirect_uri\":\"https://manager.filson.p.newstore.net/login/callback\",\"scope\":\"openid email profile\",\"state\":\"filson.p\",\"extras\":{\"access_type\":\"offline\",\"kc_idp_hint\":\"microsoft\",\"code_challenge\":\"7oKhFXXKyikTcMJ9jdcZxEoiXJqKOUjYBun8cyQpqQU\",\"code_challenge_method\":\"S256\"},\"internal\":{\"code_verifier\":\"bkyNaWZUANppzEAmAXsvwzNGMeCVRu0PrT6p65B7TXK0F0cGGGofsNmmh9GW8ZGfP07cXuhktcD0s84odwdfylIXQHB8fM32hgAEzDVb3Od1Dq23WY7XSpIZHrggnTIj\"}}"
+        },
+        {
+          "name": "nom-auth--filson.p--redirectTo",
+          "value": "https://manager.filson.p.newstore.net/sales/orders?page=0&pageSize=10&sortBy=placedAt&dir=desc"
+        },
+        {
+          "name": "returnTo",
+          "value": "/sales/orders?page=4&pageSize=100&sortBy=placedAt&dir=desc&filters%5Bchannel%5D%5B%5D=50003&filters%5BchannelType%5D%5B%5D=store&filters%5BplacedAt%5D%5Bmin%5D=2024-08-01&filters%5BplacedAt%5D%5Bmax%5D=2024-08-31"
+        },
+        {
+          "name": "newstore_ordersColumns",
+          "value": "[{\"translationId\":\"orders.listing.columns.orderid\",\"Header\":\"Order ID\",\"minWidth\":160,\"mandatory\":true,\"id\":\"salesOrderExternalId\",\"accessor\":\"salesOrderExternalId\",\"show\":true},{\"translationId\":\"common.customer\",\"Header\":\"Customer\",\"minWidth\":120,\"mandatory\":true,\"id\":\"consumer.name\",\"accessor\":\"consumer.name\",\"show\":true},{\"translationId\":\"common.associate\",\"Header\":\"Associate\",\"isSortDisabled\":false,\"minWidth\":90,\"id\":\"associate.fullName\",\"show\":true},{\"translationId\":\"common.datetime\",\"Header\":\"Date/Time\",\"type\":\"date\",\"minWidth\":200,\"mandatory\":true,\"id\":\"placedAt\",\"accessor\":\"placedAt\",\"show\":true},{\"translationId\":\"common.channeltype\",\"Header\":\"Channel Type\",\"facetLabels\":{\"in-store\":{\"id\":\"channel.type.instore1\",\"defaultMessage\":\"In-Store\"},\"in_store\":{\"id\":\"channel.type.instore\",\"defaultMessage\":\"In Store\"},\"mobile\":{\"id\":\"channel.type.mobile\",\"defaultMessage\":\"Consumer App\"},\"mobile_android\":{\"id\":\"channel.type.mobileandroid\",\"defaultMessage\":\"Consumer App (Android)\"},\"mobile_ios\":{\"id\":\"channel.type.mobileios\",\"defaultMessage\":\"Consumer App (iOS)\"},\"store\":{\"id\":\"channel.type.instore1\",\"defaultMessage\":\"In-Store\"},\"web\":{\"id\":\"channel.type.web\",\"defaultMessage\":\"Web\"}},\"minWidth\":120,\"id\":\"channelType\",\"show\":true},{\"translationId\":\"common.channel\",\"Header\":\"Channel\",\"isFilterable\":true,\"isSortDisabled\":true,\"minWidth\":120,\"id\":\"channel\",\"show\":true},{\"translationId\":\"common.fulfillment\",\"Header\":\"Fulfillment\",\"facetLabels\":{\"in_store_handover\":{\"id\":\"fulfillment.type.instorepurchase\",\"defaultMessage\":\"In-Store Purchase\"},\"in_store_pick_up\":{\"id\":\"fulfillment.type.instorepickup\",\"defaultMessage\":\"In-Store Pickup\"},\"same_day_delivery\":{\"id\":\"fulfillment.type.sameday\",\"defaultMessage\":\"Same Day\"},\"traditional_carrier\":{\"id\":\"fulfillment.type.traditional\",\"defaultMessage\":\"Traditional\"}},\"isFilterable\":true,\"searchInputPlaceholder\":\"FulFillment\",\"minWidth\":100,\"id\":\"products.fulfillmentType\",\"show\":true},{\"translationId\":\"common.demandlocation\",\"Header\":\"Demand Location\",\"minWidth\":160,\"id\":\"placementLocation.label\",\"accessor\":\"placementLocation.label\",\"show\":false},{\"translationId\":\"common.fulfillmentlocation\",\"Header\":\"Fulfillment Location\",\"minWidth\":160,\"id\":\"products.fulfillmentLocation\",\"show\":true},{\"translationId\":\"common.carrier\",\"Header\":\"Carrier\",\"isSortDisabled\":false,\"isFilterable\":true,\"minWidth\":125,\"id\":\"shipments.carrier\",\"show\":false},{\"translationId\":\"orders.listing.columns.shipmentmethod\",\"Header\":\"Shipment Method\",\"isSortDisabled\":false,\"isFilterable\":true,\"minWidth\":110,\"id\":\"shippingOptionDisplayNames\",\"show\":false},{\"Header\":\"Total\",\"translationId\":\"orders.listing.columns.total\",\"headerClassName\":\"rt-th-align-right\",\"minWidth\":100,\"id\":\"totals.grandTotal\",\"accessor\":\"totals.grandTotal\",\"show\":true},{\"translationId\":\"common.discount\",\"Header\":\"Discount\",\"facetLabels\":{\"0\":{\"id\":\"orders.listing.columns.discount.fullprice\",\"defaultMessage\":\"Full price orders\"},\"1\":{\"id\":\"orders.listing.columns.discount.discounted\",\"defaultMessage\":\"Discounted orders\"}},\"minWidth\":80,\"id\":\"discounted\",\"show\":true},{\"Header\":\"Status\",\"translationId\":\"common.status\",\"headerClassName\":\"rt-th-align-center\",\"minWidth\":150,\"isFilterable\":true,\"searchInputPlaceholder\":\"Search Status...\",\"facetLabels\":{\"canceled\":{\"id\":\"orders.status.canceled\",\"defaultMessage\":\"Canceled\"},\"pending\":{\"id\":\"sales.common.status.pending\",\"defaultMessage\":\"Pending\"},\"routing\":{\"id\":\"sales.common.status.routing\",\"defaultMessage\":\"Routing\"},\"picking\":{\"id\":\"orders.status.picking\",\"defaultMessage\":\"Picking\"},\"mispick\":{\"id\":\"orders.status.mispick\",\"defaultMessage\":\"Mispick\"},\"packing\":{\"id\":\"orders.status.packing\",\"defaultMessage\":\"Packing\"},\"mispack\":{\"id\":\"orders.status.mispack\",\"defaultMessage\":\"Mispack\"},\"labeling\":{\"id\":\"sales.common.status.printing\",\"defaultMessage\":\"Printing\"},\"ready\":{\"id\":\"sales.common.status.awaitingpickup\",\"defaultMessage\":\"Awaiting Pickup\"},\"shipped\":{\"id\":\"sales.common.status.shipped\",\"defaultMessage\":\"Shipped\"},\"in_transit\":{\"id\":\"orders.status.intransit\",\"defaultMessage\":\"In Transit\"},\"out_for_delivery\":{\"id\":\"orders.status.outfordelivery\",\"defaultMessage\":\"Out for Delivery\"},\"delivered\":{\"id\":\"orders.status.complete\",\"defaultMessage\":\"Complete\"},\"complete\":{\"id\":\"orders.status.complete\",\"defaultMessage\":\"Complete\"},\"partial_returned\":{\"id\":\"orders.status.partiallyreturned\",\"defaultMessage\":\"Partially Returned\"},\"returned\":{\"id\":\"sales.common.status.returned\",\"defaultMessage\":\"Returned\"},\"failed\":{\"id\":\"orders.status.failed\",\"defaultMessage\":\"Failed\"},\"rejected\":{\"id\":\"orders.status.rejected\",\"defaultMessage\":\"Rejected\"},\"accepted\":{\"id\":\"orders.status.accepted\",\"defaultMessage\":\"Accepted\"},\"on_hold\":{\"id\":\"orders.status.onhold\",\"defaultMessage\":\"On Hold\"},\"partially_shipped\":{\"id\":\"orders.status.partiallyshipped\",\"defaultMessage\":\"Partially Shipped\"},\"partially_rejected\":{\"id\":\"orders.status.partiallyrejected\",\"defaultMessage\":\"Partially Rejected\"}},\"sortValues\":true,\"id\":\"status\",\"accessor\":\"status\",\"show\":true}]"
+        },
+        {
+          "name": "nom-auth--filson.p--accessToken",
+          "value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJjcXVyd3gtQXYwd21zd0FLZFFHc25zUmdLbVNNSnYwVU9ybjNPM3JyZnhFIn0.eyJleHAiOjE3NTkzMzgyNDksImlhdCI6MTc1OTI5NDc0OSwiYXV0aF90aW1lIjoxNzU5Mjk0NzQ4LCJqdGkiOiI4OWU4ZWIyMS1iMzY3LTRmZWQtOGY4Ni0zYWRkNzg0YWQyOTYiLCJpc3MiOiJodHRwczovL2lkLnAubmV3c3RvcmUubmV0L2F1dGgvcmVhbG1zL2ZpbHNvbiIsImF1ZCI6WyJmaWxzb24iLCJuZXdzdG9yZS1hc3NvY2lhdGUtYXBwIiwiYnJva2VyIiwiYWNjb3VudCJdLCJzdWIiOiJmOTkwZmViZi1mMDU1LTRhODQtOGUwZS0wZTVkMDc1NTM4MTMiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJuZXdzdG9yZS1vbW5pY2hhbm5lbC1tYW5hZ2VyIiwic2Vzc2lvbl9zdGF0ZSI6Ijc4YWMxMGIxLTU5ZWMtNDhlZS04OTdlLTU3Y2ZiMjEyNmMyZSIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiS2V5aG9sZGVyIiwib2ZmbGluZV9hY2Nlc3MiLCJ1bWFfYXV0aG9yaXphdGlvbiIsImRlZmF1bHQtcm9sZXMtZmlsc29uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsibmV3c3RvcmUtb21uaWNoYW5uZWwtbWFuYWdlciI6eyJyb2xlcyI6WyJ2aWV3X2Nhc2hfbWFuYWdlbWVudCIsInZpZXdfaW5zaWdodHMiLCJ2aWV3X2N1c3RvbWVycyIsInZpZXdfaW52ZW50b3J5X21hbmFnZW1lbnQiLCJ2aWV3X2Rhc2hib2FyZHMiLCJlZGl0X3NoaXBwaW5nIiwidmlld19tYXJrZXRpbmciLCJ2aWV3X29yZGVycyIsImVkaXRfY3VzdG9tZXJzIiwiZXhwb3J0X29yZGVycyIsImxvZ2luX2hxIl19LCJuZXdzdG9yZS1hc3NvY2lhdGUtYXBwIjp7InJvbGVzIjpbImNhc2hfbWFuYWdlbWVudF9vcGVyYXRpb25zIiwiY2xpZW50ZWxpbmdfb3BlcmF0aW9ucyIsImFwcHJvdmVfb3JkZXJzIiwibG9naW5fYWEiLCJwZXJmb3JtX2NvdW50cyIsInZpZXdfaW52ZW50b3J5Il19LCJicm9rZXIiOnsicm9sZXMiOlsicmVhZC10b2tlbiJdfSwiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJvcGVuaWQgY2F0YWxvZzpwcm9kdWN0LWV4cG9ydDpyZWFkIHByb21vdGlvbnM6cmVhc29uLWNvZGVzOndyaXRlIGN1c3RvbWVyOnNlZ21lbnRhdGlvbjp3cml0ZSBjYXRhbG9nOmltcG9ydC1zY2hlbWFzOnJlYWQgY3VzdG9tZXI6cHJvZmlsZTpyZWFkIHByb21vdGlvbnM6cmVhc29uLWNvZGVzOnJlYWQgY3VzdG9tZXI6cHJvZmlsZTp3cml0ZSBpbnZlbnRvcnk6cmVzZXJ2YXRpb25zOndyaXRlIHByb2ZpbGUgdGF4ZXM6ZXhlbXB0aW9uLWNsYXNzZXM6cmVhZCBlbWFpbCBuZXdzdG9yZTpjb25maWd1cmF0aW9uOnJlYWQgcHJvbW90aW9uczpjYXJ0LWRpc2NvdW50czp3cml0ZSBjYXRhbG9nOnByaWNlYm9vay1leHBvcnQ6cmVhZCBjYXRhbG9nOmltcG9ydC1zY2hlbWFzOndyaXRlIGludmVudG9yeTpyZXNlcnZhdGlvbnM6cmVhZCBjdXN0b21lcjpzZWdtZW50YXRpb246cmVhZCIsInNpZCI6Ijc4YWMxMGIxLTU5ZWMtNDhlZS04OTdlLTU3Y2ZiMjEyNmMyZSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYW1lIjoiQmVuIER1cmF6em8iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJiZW4uZHVyYXp6b0BmaWxzb24uY29tIiwiZ2l2ZW5fbmFtZSI6IkJlbiIsImh0dHA6Ly9uZXdzdG9yZS9uZXdzdG9yZV9pZCI6IjczYTI5NTY4MDJhMjUwZTVhMjMzNGM5NTVkY2YxY2ExIiwiZmFtaWx5X25hbWUiOiJEdXJhenpvIiwiZW1haWwiOiJiZW4uZHVyYXp6b0BmaWxzb24uY29tIiwiaHR0cDovL25ld3N0b3JlL3RlbmFudCI6ImZpbHNvbiJ9.VRSBnNSAElI12pvNHJSn7uY4hoBOu1jsfXoSPNDDhO_G88gb-eTAkc-rJQVerNwRjFfpYFTrGa9MkzI2a5gKWYiHhCTm1dDmh1cYorOj18Z1fE4KjcCf7oIyhWz_hnZ04p7I7qQ1-H-3GNKhqljtwxy3WykNoFAZJQZc8gO6ruq8MojxrwQSZZ6KlKJCInWdf6J8F-maQ71EK20h7gaN7t2YqXcMfb6RrA3JcR4hKTAom2HqBHuSZkm2VfQNd32RBLnvZ-7EFCie5D-qkTD6OcbrZzmKmOYVwhI-fpVMcIsL09drhD38PUPabNVgU3N_sdmMulISczE6WHSb4fM4Tg"
+        },
+        {
+          "name": "nom-auth--filson.p--refreshToken",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJkYjQxZWIzMi03Y2Y2LTQ2ZDQtODI4OC0wNmViNThhNjRjOTcifQ.eyJleHAiOjE3NTk4OTk1NDgsImlhdCI6MTc1OTI5NDc0OSwianRpIjoiNmIyNjU4YjEtOWI5MS00OGM1LWFjYmUtODliMGEyYjg4OGE0IiwiaXNzIjoiaHR0cHM6Ly9pZC5wLm5ld3N0b3JlLm5ldC9hdXRoL3JlYWxtcy9maWxzb24iLCJhdWQiOiJodHRwczovL2lkLnAubmV3c3RvcmUubmV0L2F1dGgvcmVhbG1zL2ZpbHNvbiIsInN1YiI6ImY5OTBmZWJmLWYwNTUtNGE4NC04ZTBlLTBlNWQwNzU1MzgxMyIsInR5cCI6IlJlZnJlc2giLCJhenAiOiJuZXdzdG9yZS1vbW5pY2hhbm5lbC1tYW5hZ2VyIiwic2Vzc2lvbl9zdGF0ZSI6Ijc4YWMxMGIxLTU5ZWMtNDhlZS04OTdlLTU3Y2ZiMjEyNmMyZSIsInNjb3BlIjoib3BlbmlkIGNhdGFsb2c6cHJvZHVjdC1leHBvcnQ6cmVhZCBwcm9tb3Rpb25zOnJlYXNvbi1jb2Rlczp3cml0ZSBjdXN0b21lcjpzZWdtZW50YXRpb246d3JpdGUgY2F0YWxvZzppbXBvcnQtc2NoZW1hczpyZWFkIGN1c3RvbWVyOnByb2ZpbGU6cmVhZCBwcm9tb3Rpb25zOnJlYXNvbi1jb2RlczpyZWFkIGN1c3RvbWVyOnByb2ZpbGU6d3JpdGUgaW52ZW50b3J5OnJlc2VydmF0aW9uczp3cml0ZSBwcm9maWxlIHRheGVzOmV4ZW1wdGlvbi1jbGFzc2VzOnJlYWQgZW1haWwgbmV3c3RvcmU6Y29uZmlndXJhdGlvbjpyZWFkIHByb21vdGlvbnM6Y2FydC1kaXNjb3VudHM6d3JpdGUgY2F0YWxvZzpwcmljZWJvb2stZXhwb3J0OnJlYWQgY2F0YWxvZzppbXBvcnQtc2NoZW1hczp3cml0ZSBpbnZlbnRvcnk6cmVzZXJ2YXRpb25zOnJlYWQgY3VzdG9tZXI6c2VnbWVudGF0aW9uOnJlYWQiLCJzaWQiOiI3OGFjMTBiMS01OWVjLTQ4ZWUtODk3ZS01N2NmYjIxMjZjMmUifQ.8ELVkpuai_4g8V_EDdN-5dUK3pOBW5Nq3hyn40Gsqec"
+        },
+        {
+          "name": "menu-favorites",
+          "value": "[]"
+        },
+        {
+          "name": "AMP_unsent_1635bb8ce6",
+          "value": "[]"
+        },
+        {
+          "name": "filson.p.f990febf-f055-4a84-8e0e-0e5d07553813.history",
+          "value": "[\"/sales/orders/9b2cdc5d-45b0-4bcc-8a6b-5ef7d7a66e87\",\"/sales/orders/050ae8ca-2cf1-4a41-b05d-eb173cb0cd0f\",\"/sales/orders/67a618ef-abcc-4c08-98bb-a7868fdf1de4\",\"/sales/orders/91548fef-c777-4e95-9dac-da9c2bfe66dd\",\"/sales/orders/6350a292-96a5-4762-b233-844de37953f0\",\"/sales/orders/78856dbb-5a2a-4270-b551-647e275e128a\",\"/sales/orders/eefe09f5-bc6b-44cc-8144-921e06357059\",\"/sales/orders?page=0&pageSize=10&sortBy=placedAt&dir=desc\",\"/sales/orders?page=0&pageSize=10&sortBy=placedAt&dir=desc\",\"/sales/orders?page=0&pageSize=10&sortBy=placedAt&dir=desc\",\"/sales/orders?page=0&pageSize=10&sortBy=placedAt&dir=desc\",\"/sales/orders?page=0&pageSize=10&sortBy=placedAt&dir=desc\",\"/sales/orders?page=0&pageSize=100&sortBy=placedAt&dir=desc&filters%5BchannelType%5D%5B%5D=store&filters%5Bchannel%5D=50003&filters%5BchannelType%5D=In-Store\",\"/sales/orders?page=0&pageSize=10&sortBy=placedAt&dir=desc\",\"/sales/orders?page=0&pageSize=100&sortBy=placedAt&dir=desc&filters%5BchannelType%5D%5B%5D=store&filters%5Bchannel%5D=50003&filters%5BchannelType%5D=In-Store\",\"/sales/orders?page=0&pageSize=10&sortBy=placedAt&dir=desc\",\"/sales/orders?page=0&pageSize=100&sortBy=placedAt&dir=desc&filters%5BchannelType%5D%5B%5D=store&filters%5Bchannel%5D=50003&filters%5BchannelType%5D=In-Store\",\"/sales/orders?page=0&pageSize=10&sortBy=placedAt&dir=desc\",\"/sales/orders?page=0&pageSize=10&sortBy=placedAt&dir=desc\",\"/sales/orders?page=0&pageSize=10&sortBy=placedAt&dir=desc\",\"/sales/orders?page=0&pageSize=10&sortBy=placedAt&dir=desc\",\"/sales/orders?page=0&pageSize=10&sortBy=placedAt&dir=desc\",\"/sales/orders?page=0&pageSize=10&sortBy=placedAt&dir=desc\",\"/sales/orders\",\"/login\"]"
+        },
+        {
+          "name": "Ki71GB4qh5_appauth_authorization_request",
+          "value": "{\"response_type\":\"code\",\"client_id\":\"newstore-omnichannel-manager\",\"redirect_uri\":\"https://manager.filson.p.newstore.net/login/callback\",\"scope\":\"openid email profile\",\"state\":\"filson.p\",\"extras\":{\"access_type\":\"offline\",\"kc_idp_hint\":\"microsoft\",\"code_challenge\":\"e_-FAfFfY0qM8MhgvP32BA4l6h7xBx4vlWMjddp2ECA\",\"code_challenge_method\":\"S256\"},\"internal\":{\"code_verifier\":\"It2CM4XIuCFlog9itUSCCzl6s3kjt8FXBtwUW8EdEfRXahWZ2GJfBSJuGkGQ7p81QLLpHiiZLcqx6CjLAPzUA2og5LohlYUGIrLNbXhJ1qV1RkpcWujmQdMRt0hs1mvE\"}}"
+        },
+        {
+          "name": "access_token",
+          "value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJjcXVyd3gtQXYwd21zd0FLZFFHc25zUmdLbVNNSnYwVU9ybjNPM3JyZnhFIn0.eyJleHAiOjE3NTkzMzgyNDksImlhdCI6MTc1OTI5NDc0OSwiYXV0aF90aW1lIjoxNzU5Mjk0NzQ4LCJqdGkiOiI4OWU4ZWIyMS1iMzY3LTRmZWQtOGY4Ni0zYWRkNzg0YWQyOTYiLCJpc3MiOiJodHRwczovL2lkLnAubmV3c3RvcmUubmV0L2F1dGgvcmVhbG1zL2ZpbHNvbiIsImF1ZCI6WyJmaWxzb24iLCJuZXdzdG9yZS1hc3NvY2lhdGUtYXBwIiwiYnJva2VyIiwiYWNjb3VudCJdLCJzdWIiOiJmOTkwZmViZi1mMDU1LTRhODQtOGUwZS0wZTVkMDc1NTM4MTMiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJuZXdzdG9yZS1vbW5pY2hhbm5lbC1tYW5hZ2VyIiwic2Vzc2lvbl9zdGF0ZSI6Ijc4YWMxMGIxLTU5ZWMtNDhlZS04OTdlLTU3Y2ZiMjEyNmMyZSIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsiS2V5aG9sZGVyIiwib2ZmbGluZV9hY2Nlc3MiLCJ1bWFfYXV0aG9yaXphdGlvbiIsImRlZmF1bHQtcm9sZXMtZmlsc29uIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsibmV3c3RvcmUtb21uaWNoYW5uZWwtbWFuYWdlciI6eyJyb2xlcyI6WyJ2aWV3X2Nhc2hfbWFuYWdlbWVudCIsInZpZXdfaW5zaWdodHMiLCJ2aWV3X2N1c3RvbWVycyIsInZpZXdfaW52ZW50b3J5X21hbmFnZW1lbnQiLCJ2aWV3X2Rhc2hib2FyZHMiLCJlZGl0X3NoaXBwaW5nIiwidmlld19tYXJrZXRpbmciLCJ2aWV3X29yZGVycyIsImVkaXRfY3VzdG9tZXJzIiwiZXhwb3J0X29yZGVycyIsImxvZ2luX2hxIl19LCJuZXdzdG9yZS1hc3NvY2lhdGUtYXBwIjp7InJvbGVzIjpbImNhc2hfbWFuYWdlbWVudF9vcGVyYXRpb25zIiwiY2xpZW50ZWxpbmdfb3BlcmF0aW9ucyIsImFwcHJvdmVfb3JkZXJzIiwibG9naW5fYWEiLCJwZXJmb3JtX2NvdW50cyIsInZpZXdfaW52ZW50b3J5Il19LCJicm9rZXIiOnsicm9sZXMiOlsicmVhZC10b2tlbiJdfSwiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJvcGVuaWQgY2F0YWxvZzpwcm9kdWN0LWV4cG9ydDpyZWFkIHByb21vdGlvbnM6cmVhc29uLWNvZGVzOndyaXRlIGN1c3RvbWVyOnNlZ21lbnRhdGlvbjp3cml0ZSBjYXRhbG9nOmltcG9ydC1zY2hlbWFzOnJlYWQgY3VzdG9tZXI6cHJvZmlsZTpyZWFkIHByb21vdGlvbnM6cmVhc29uLWNvZGVzOnJlYWQgY3VzdG9tZXI6cHJvZmlsZTp3cml0ZSBpbnZlbnRvcnk6cmVzZXJ2YXRpb25zOndyaXRlIHByb2ZpbGUgdGF4ZXM6ZXhlbXB0aW9uLWNsYXNzZXM6cmVhZCBlbWFpbCBuZXdzdG9yZTpjb25maWd1cmF0aW9uOnJlYWQgcHJvbW90aW9uczpjYXJ0LWRpc2NvdW50czp3cml0ZSBjYXRhbG9nOnByaWNlYm9vay1leHBvcnQ6cmVhZCBjYXRhbG9nOmltcG9ydC1zY2hlbWFzOndyaXRlIGludmVudG9yeTpyZXNlcnZhdGlvbnM6cmVhZCBjdXN0b21lcjpzZWdtZW50YXRpb246cmVhZCIsInNpZCI6Ijc4YWMxMGIxLTU5ZWMtNDhlZS04OTdlLTU3Y2ZiMjEyNmMyZSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYW1lIjoiQmVuIER1cmF6em8iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJiZW4uZHVyYXp6b0BmaWxzb24uY29tIiwiZ2l2ZW5fbmFtZSI6IkJlbiIsImh0dHA6Ly9uZXdzdG9yZS9uZXdzdG9yZV9pZCI6IjczYTI5NTY4MDJhMjUwZTVhMjMzNGM5NTVkY2YxY2ExIiwiZmFtaWx5X25hbWUiOiJEdXJhenpvIiwiZW1haWwiOiJiZW4uZHVyYXp6b0BmaWxzb24uY29tIiwiaHR0cDovL25ld3N0b3JlL3RlbmFudCI6ImZpbHNvbiJ9.VRSBnNSAElI12pvNHJSn7uY4hoBOu1jsfXoSPNDDhO_G88gb-eTAkc-rJQVerNwRjFfpYFTrGa9MkzI2a5gKWYiHhCTm1dDmh1cYorOj18Z1fE4KjcCf7oIyhWz_hnZ04p7I7qQ1-H-3GNKhqljtwxy3WykNoFAZJQZc8gO6ruq8MojxrwQSZZ6KlKJCInWdf6J8F-maQ71EK20h7gaN7t2YqXcMfb6RrA3JcR4hKTAom2HqBHuSZkm2VfQNd32RBLnvZ-7EFCie5D-qkTD6OcbrZzmKmOYVwhI-fpVMcIsL09drhD38PUPabNVgU3N_sdmMulISczE6WHSb4fM4Tg"
+        },
+        {
+          "name": "lV9S6f6s5K_appauth_authorization_service_configuration",
+          "value": "{\"authorization_endpoint\":\"https://id.p.newstore.net/auth/realms/filson/protocol/openid-connect/auth\",\"token_endpoint\":\"https://id.p.newstore.net/auth/realms/filson/protocol/openid-connect/token\",\"revocation_endpoint\":\"https://id.p.newstore.net/auth/realms/filson/protocol/openid-connect/revoke\",\"end_session_endpoint\":\"https://id.p.newstore.net/auth/realms/filson/protocol/openid-connect/logout\",\"userinfo_endpoint\":\"https://id.p.newstore.net/auth/realms/filson/protocol/openid-connect/userinfo\"}"
+        }
+      ]
+    },
+    {
+      "origin": "https://4httr9r4tb6c.statuspage.io",
+      "localStorage": [
+        {
+          "name": "4httr9r4tb6c.statuspage.io_dismissed",
+          "value": "[]"
+        }
+      ]
+    }
+  ]
+}

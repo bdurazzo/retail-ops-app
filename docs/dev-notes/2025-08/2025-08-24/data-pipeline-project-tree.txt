@@ -1,0 +1,322 @@
+FILSON PORTLAND DATA PIPELINE - PROJECT TREE STRUCTURE
+
+This document shows the complete folder and file structure for all components 
+involved in the data pipeline, organized by their role in the system.
+
+====================================================================================
+📂 ROOT PROJECT STRUCTURE
+====================================================================================
+
+retail-ops-app/
+├── 📋 PROJECT CONFIG FILES
+│   ├── package.json                    # Dependencies & scripts (Papa Parse, Day.js, etc.)
+│   ├── package-lock.json              # Dependency lockfile
+│   ├── vite.config.js                 # Build config with path aliases (@, @lib, @data)
+│   ├── jsconfig.json                  # JavaScript/React configuration
+│   ├── tailwind.config.js             # CSS framework config
+│   └── postcss.config.js              # CSS processing config
+│
+├── 🏠 APPLICATION ENTRY POINTS
+│   ├── index.html                     # HTML entry point
+│   └── src/
+│       ├── main.jsx                   # React application bootstrap
+│       ├── App.jsx                    # Main app with tab navigation → Analytics
+│       └── index.css                  # Global styles
+│
+├── 📚 SHARED LIBRARIES
+│   └── lib/
+│       └── dataPaths.js               # 🔗 Universal JSON loader (browser/Node.js)
+│
+├── 🗂️ STATIC DATA SERVING
+│   └── public/
+│       └── data/                      # Static file serving root
+│           ├── registry/              # Data discovery manifests
+│           │   └── index.json         # 🔗 Master data registry
+│           ├── newstore/              # NewStore data source
+│           │   ├── orders/            # Order data hierarchy
+│           │   │   ├── index.json     # 🔗 Orders manifest
+│           │   │   ├── 2023/          # Year-based organization
+│           │   │   │   ├── 2023-01/
+│           │   │   │   │   └── 2023-01_orders_in_store.csv  # 🔗 Monthly order data
+│           │   │   │   ├── 2023-02/
+│           │   │   │   │   └── 2023-02_orders_in_store.csv
+│           │   │   │   └── ... (monthly files)
+│           │   │   ├── 2024/
+│           │   │   │   └── ... (similar monthly structure)
+│           │   │   └── 2025/
+│           │   │       └── ... (similar monthly structure)
+│           │   └── catalog/           # Product catalog data
+│           │       └── storefront-catalog-en-us.csv  # 🔗 Product data
+│           ├── kepler/                # Additional data sources (future)
+│           └── schemas/               # Data validation schemas
+│               └── orders_in_store.schema.v1.json  # 🔗 Order data schema
+│
+├── 🧠 CORE PIPELINE INFRASTRUCTURE
+│   └── src/core/
+│       ├── 🌐 HTTP & NETWORKING
+│       │   └── io/
+│       │       └── HttpStaticProvider.js    # 🔗 HTTP client for static files
+│       │
+│       ├── 🛤️ PATH RESOLUTION
+│       │   └── paths/
+│       │       ├── ManifestClient.js        # 🔗 Data registry client
+│       │       └── PathResolver.js          # 🔗 URL template resolution
+│       │
+│       ├── ⚙️ CONFIGURATION
+│       │   └── config/
+│       │       └── dataSources.js           # 🔗 Data source configurations
+│       │
+│       ├── 📊 DATA SCHEMAS
+│       │   └── schemas/
+│       │       └── ordersInStore.schema.v1.json  # 🔗 Order schema definition
+│       │
+│       └── 🔧 DATA UTILITIES
+│           └── utils/
+│               └── ordersNormalizer.js      # 🔗 Advanced timezone & data normalization
+│
+├── 🔬 ANALYTICS FEATURE MODULE
+│   └── src/features/analytics/
+│       ├── 🗄️ DATA ACCESS LAYER
+│       │   └── repositories/
+│       │       └── OrdersRepository.js      # 🔗 Main data access with CSV parsing
+│       │
+│       ├── 🎯 BUSINESS LOGIC LAYER  
+│       │   └── services/
+│       │       └── AnalyticsService.js      # 🔗 Pipeline orchestration
+│       │
+│       ├── 🔄 DATA TRANSFORMATION ADAPTERS
+│       │   └── adapters/
+│       │       ├── time/
+│       │       │   └── timeAdapter.js       # 🔗 Date range filtering
+│       │       ├── productAdapter.js        # 🔗 Product filtering
+│       │       └── metricAdapter.js         # 🔗 Metric calculations
+│       │
+│       ├── 📋 DATA CONTRACTS (DTOs)
+│       │   └── dtos/
+│       │       ├── QueryDTO.js              # 🔗 Query normalization
+│       │       ├── TableDTO.js              # 🔗 Table structure definition
+│       │       └── ChartDTO.js              # 🔗 Chart structure definition
+│       │
+│       ├── 🏭 DATA TRANSFORMATION (FEEDERS)
+│       │   └── feeders/
+│       │       ├── tableFeeder.js           # 🔗 Raw data → Table format
+│       │       └── chartFeeder.js           # 🔗 Raw data → Chart format
+│       │
+│       ├── ⚛️ REACT INTEGRATION
+│       │   └── hooks/
+│       │       └── useAnalyticsQuery.js     # 🔗 Main React hook orchestrator
+│       │
+│       ├── 🎨 UI COMPONENTS
+│       │   └── components/
+│       │       ├── StatusDisplay.jsx        # 🔗 Query status & error display
+│       │       ├── charts/
+│       │       │   └── Chart.jsx            # 🔗 Data visualization component
+│       │       ├── tables/
+│       │       │   └── Table.jsx            # 🔗 Advanced data table with scrolling
+│       │       ├── panels/
+│       │       │   ├── Panel.jsx            # 🔗 Filter panel shell
+│       │       │   └── tabs/
+│       │       │       ├── index.js         # Tab registry
+│       │       │       ├── time/
+│       │       │       │   ├── Time.jsx     # Time filter UI
+│       │       │       │   └── Calendar.jsx # Date picker
+│       │       │       ├── product/
+│       │       │       │   └── Product.jsx  # Product filter UI
+│       │       │       ├── metric/
+│       │       │       │   └── Metric.jsx   # Metric filter UI
+│       │       │       ├── element/
+│       │       │       │   └── Element.jsx  # Element filter UI
+│       │       │       └── trend/
+│       │       │           └── Trend.jsx    # Trend filter UI
+│       │       └── menus/
+│       │           ├── Menu.jsx             # 🔗 Dropdown menu system
+│       │           └── Menu.css             # Menu styling
+│       │
+│       └── 📊 ANALYTICS REGISTRIES
+│           └── registry/
+│               ├── tableRegistry.js         # Table configuration registry
+│               ├── kpiRegistry.js          # KPI definitions
+│               └── kpis/
+│                   ├── index.js            # KPI index
+│                   └── top_performers.js   # 🔗 Top performers KPI logic
+│
+├── 📱 PAGE INTEGRATION
+│   └── src/pages/
+│       ├── Analytics.jsx                   # 🔗 Main analytics page (pipeline consumer)
+│       ├── Store.jsx                       # Store dashboard page
+│       ├── Catalog.jsx                     # Product catalog page
+│       ├── Zones.jsx                       # Zone management page
+│       └── Assistant.jsx                   # AI assistant page
+│
+├── 🔧 OTHER FEATURE MODULES
+│   └── src/features/
+│       ├── storeDashboard/                 # Store dashboard components
+│       │   └── components/
+│       │       ├── OverviewCard.jsx
+│       │       └── VisualStoreTrends.jsx   # 🔗 Uses some pipeline concepts
+│       ├── catalog/                        # Product catalog feature (separate pipeline)
+│       ├── common/                         # Shared components
+│       └── Inventory/                      # Inventory management
+│
+├── 🧪 TESTING & VALIDATION
+│   └── scripts/
+│       └── smoke/
+│           ├── validate_orders_in_store_month.mjs  # 🔗 Data validation script
+│           └── print-architecture.mjs      # Architecture documentation script
+│
+└── 📚 DOCUMENTATION
+    ├── project-code-summary.txt           # High-level code summary
+    ├── data-pipeline-source-code-roadmap.txt  # Complete source code reference  
+    ├── data-pipeline-project-tree.txt     # This file - structure overview
+    └── docs/                              # Additional documentation
+        └── dev-notes/                     # Development notes
+            ├── README_MASTER.md
+            ├── TEMPLATE.md
+            └── 2025-08/                   # Monthly development logs
+
+====================================================================================
+🔗 PIPELINE DATA FLOW PATHWAYS
+====================================================================================
+
+PRIMARY DATA FLOW PATHWAY:
+==========================
+
+1. USER INTERFACE
+   src/pages/Analytics.jsx 
+   └── 🔄 Query State Management
+
+2. REACT INTEGRATION  
+   src/features/analytics/hooks/useAnalyticsQuery.js
+   └── 🔄 Pipeline Orchestration
+
+3. BUSINESS LOGIC
+   src/features/analytics/services/AnalyticsService.js
+   └── 🔄 Service Coordination
+
+4. DATA ACCESS
+   src/features/analytics/repositories/OrdersRepository.js
+   └── 🔄 CSV Loading & Parsing
+
+5. CORE INFRASTRUCTURE
+   ├── src/core/paths/ManifestClient.js         (Data Discovery)
+   ├── src/core/paths/PathResolver.js           (URL Resolution)  
+   ├── src/core/io/HttpStaticProvider.js        (HTTP Requests)
+   └── src/core/config/dataSources.js           (Configuration)
+
+6. STATIC DATA FILES
+   public/data/newstore/orders/[YYYY]/[YYYY-MM]/[YYYY-MM]_orders_in_store.csv
+   └── 🔄 Raw CSV Data
+
+7. DATA NORMALIZATION
+   src/core/utils/ordersNormalizer.js
+   └── 🔄 Timezone & Format Conversion
+
+8. DATA FILTERING
+   ├── src/features/analytics/adapters/time/timeAdapter.js      (Time Filtering)
+   ├── src/features/analytics/adapters/productAdapter.js       (Product Filtering)
+   └── src/features/analytics/adapters/metricAdapter.js        (Metric Processing)
+
+9. UI TRANSFORMATION
+   ├── src/features/analytics/feeders/tableFeeder.js           (Table Format)
+   └── src/features/analytics/feeders/chartFeeder.js           (Chart Format)
+
+10. USER INTERFACE RENDERING
+    ├── src/features/analytics/components/tables/Table.jsx     (Data Display)
+    ├── src/features/analytics/components/StatusDisplay.jsx    (Status Info)
+    └── src/features/analytics/components/charts/Chart.jsx     (Visualization)
+
+CONFIGURATION PATHWAY:
+=====================
+
+Application Config → Core Config → Runtime Config
+├── vite.config.js                    # Path aliases & build setup
+├── src/core/config/dataSources.js    # Data source definitions  
+├── public/data/registry/index.json   # Data registry manifest
+└── public/data/newstore/orders/index.json  # Orders manifest
+
+SCHEMA VALIDATION PATHWAY:  
+=========================
+
+Data Schema → Normalization → Validation
+├── src/core/schemas/ordersInStore.schema.v1.json  # JSON Schema definition
+├── src/core/utils/ordersNormalizer.js              # Data transformation  
+└── scripts/smoke/validate_orders_in_store_month.mjs # Validation testing
+
+ERROR HANDLING PATHWAY:
+======================
+
+Component Errors → Hook Errors → Service Errors → Repository Errors → Core Errors
+├── UI Components (try/catch, error boundaries)
+├── useAnalyticsQuery (error state management)  
+├── AnalyticsService (business logic errors)
+├── OrdersRepository (data access errors)
+└── Core Infrastructure (HTTP, parsing, file errors)
+
+====================================================================================
+🗂️ KEY DIRECTORY EXPLANATIONS
+====================================================================================
+
+📁 /src/core/
+   The foundational layer that all other components build upon.
+   Contains infrastructure that could be reused across different features.
+
+📁 /src/features/analytics/  
+   Self-contained feature module following domain-driven design.
+   All analytics-related code is organized here by responsibility.
+
+📁 /public/data/
+   Static file serving for CSV data and manifests.
+   Organized hierarchically for efficient data discovery and loading.
+
+📁 /lib/
+   Shared utilities that work in both browser and Node.js contexts.
+   Used by both the main application and development/testing scripts.
+
+📁 /scripts/
+   Development and validation tools that operate outside the main application.
+   Includes smoke tests and architecture documentation generators.
+
+====================================================================================
+🔍 CRITICAL PIPELINE FILES SUMMARY
+====================================================================================
+
+🔗 ENTRY POINTS:
+├── src/pages/Analytics.jsx                    # User interface entry
+└── src/features/analytics/hooks/useAnalyticsQuery.js  # React hook entry
+
+🔗 ORCHESTRATION:
+├── src/features/analytics/services/AnalyticsService.js  # Business logic
+└── src/features/analytics/repositories/OrdersRepository.js  # Data access
+
+🔗 CORE INFRASTRUCTURE:
+├── src/core/io/HttpStaticProvider.js          # HTTP requests
+├── src/core/paths/ManifestClient.js           # Data discovery
+├── src/core/paths/PathResolver.js             # URL resolution
+└── src/core/utils/ordersNormalizer.js         # Data transformation
+
+🔗 DATA CONTRACTS:
+├── src/features/analytics/dtos/QueryDTO.js    # Query normalization
+├── src/features/analytics/dtos/TableDTO.js    # Table structure  
+└── src/features/analytics/dtos/ChartDTO.js    # Chart structure
+
+🔗 UI TRANSFORMATION:
+├── src/features/analytics/feeders/tableFeeder.js  # Table formatting
+└── src/features/analytics/feeders/chartFeeder.js  # Chart formatting
+
+🔗 USER INTERFACE:
+├── src/features/analytics/components/tables/Table.jsx      # Data display
+├── src/features/analytics/components/StatusDisplay.jsx     # Status info
+└── src/features/analytics/components/charts/Chart.jsx      # Visualization
+
+🔗 CONFIGURATION:
+├── src/core/config/dataSources.js             # Data source config
+├── public/data/registry/index.json            # Master registry
+└── vite.config.js                            # Build & path aliases
+
+🔗 DATA FILES:
+└── public/data/newstore/orders/[YYYY]/[YYYY-MM]/[YYYY-MM]_orders_in_store.csv
+
+This structure follows a clean architecture pattern with clear separation of concerns,
+making it easy to understand, maintain, and extend the data pipeline system.
+
+====================================================================================

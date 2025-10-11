@@ -1,0 +1,91 @@
+
+
+.overlay-confined {
+  position: absolute;
+  top: 56px; /* Below app header */
+  bottom: 56px; /* Above bottom nav */
+  left: 0;
+  right: 0;
+  background: black;
+  opacity: 0.35;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.tab-drop-panel {
+  position: absolute;
+  top: 56px; /* Match baseline of ChartTabs */
+  left: 0;
+  right: 0;
+  background: white;
+  border-bottom: 1px solid #ddd;
+  z-index: 20;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  border-radius: 0 0 10px 10px;
+}
+
+.tab-drop-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.tab-title {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.tab-drop-content {
+  margin-top: 1rem;
+}
+
+.filter-section {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-section label {
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+  color: #444;
+}
+
+.filter-section input,
+.filter-section select {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.tab-drop-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.btn-reset,
+.btn-apply {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-reset {
+  background: #f1f1f1;
+  color: #333;
+}
+
+.btn-apply {
+  background: #0070f3;
+  color: white;
+}

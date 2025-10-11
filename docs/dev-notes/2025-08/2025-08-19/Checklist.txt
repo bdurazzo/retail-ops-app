@@ -1,0 +1,851 @@
+# 📋 Checklist.txt – Analytics Panels Integration
+
+**🎯 End Goal**  
+All three panels (**Product, Metrics, Time**) work together in one pass-through. The `Analytics` table should only show:  
+- Products matching the search  
+- Metric columns that are checked  
+- Rows limited to the chosen time period or range  
+
+Everything is staged in panels → only applied when the **Apply button** is pressed in `TabDropPanel`.
+
+---
+
+## 1. Controls Context (`controlsContext.jsx`)
+- [ ] Initial state contains:
+  - `productQueryLive` (typing) + `productQuery` (debounced)
+  - `metricsVisible` (Orders, Units, Net Revenue, AOV) + `pendingMetricsVisible`
+  - `period`, `range`, `pendingRange`
+- [ ] Reducer supports:
+  - Products: set, clear, setQueryLive, setQuery
+  - Metrics: toggle, stageToggle, stageInitIfNeeded, applyPending, clearPending
+  - Time: setPeriod, stageRange, applyPendingRange, clearPendingRange
+- [ ] Expose `selectedColumnKeys` (array of metric headers to show in table).
+
+---
+
+## 2. MetricsPanel.jsx
+- [ ] Render checkboxes for: **Orders, Units, Net Revenue, AOV**.
+- [ ] Checkbox toggles staged values (`pendingMetricsVisible`) if present.
+- [ ] Falls back to toggling live state if staging not available.
+- [ ] Shows “changes apply immediately” note when no staging.
+
+---
+
+## 3. ProductPanel.jsx (Search Bar)
+- [ ] Search input with **debounce**.
+- [ ] `onChange`: updates `productQueryLive` immediately.
+- [ ] Debounced: commits to `productQuery`.
+- [ ] Optional: clear button resets both.
+
+---
+
+## 4. TimePanel.jsx
+- [ ] Two modes:
+  - **Period** (dropdown YYYY-MM or free input).
+  - **Custom Range**: Start + End fields.
+- [ ] Uses pending values until Apply.
+- [ ] Apply → commits staged range to context (`time/applyPendingRange`).
+- [ ] Reset → clears pending state.
+
+---
+
+## 5. TabDropPanel.jsx
+- [ ] Hosts panels (Product, Metrics, Time).
+- [ ] **Apply** button:
+  - Dispatch `metrics/applyPending`
+  - Dispatch `time/applyPendingRange`
+- [ ] **Reset** button clears staged selections.
+- [ ] Handles animation + open/close, but passes through all logic to panels.
+
+---
+
+## 6. TableDataRegistry.js (or equivalent table logic)
+- [ ] Reads `selectedColumnKeys` from context.
+- [ ] Only renders those metric columns.
+- [ ] Filters rows by:
+  - `productQuery`
+  - `period` OR `range` from context
+- [ ] Integrates smoothly into pipeline (no bandaids, no dupes).
+
+---
+
+✅ Success = The analytics table updates correctly after hitting **Apply** in TabDropPanel, with live debounced product search, staged metric checkboxes, and staged time ranges.
+
+PRODUCT PANEL CODE:
+
+// src/features/analytics/components/panels/ProductPanel.jsx
+import React, { useEffect, useMemo, useState } from "react";
+import { IconSearch, IconX } from "@tabler/icons-react";
+import { useAnalyticsControls } from "../../state/controlsContext.jsx";
+
+export default function ProductPanel() {
+  const { state, dispatch } = useAnalyticsControls();
+  // show the current query from global state
+  const [input, setInput] = useState(state.productQuery || "");
+
+  // debounce the live table filter
+  const delay = 250;
+  const debounced = useMemo(() => {
+    let t;
+    return (val) => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        dispatch({ type: "products/setQuery", value: val });
+      }, delay);
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
+    debounced(input);
+  }, [input, debounced]);
+
+  const clear = () => {
+    setInput("");
+    dispatch({ type: "products/clearQuery" });
+  };
+
+  return (
+    <div className="space-y-3">
+      <label className="block text-xs font-semibold text-gray-700">
+        Product search
+      </label>
+
+      <div className="relative">
+        {/* search icon */}
+        <IconSearch
+          size={18}
+          className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+          aria-hidden="true"
+        />
+        {/* input */}
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Type product name…"
+          className="w-full pl-8 pr-8 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-300"
+          autoComplete="off"
+        />
+        {/* clear button */}
+        {input ? (
+          <button
+            type="button"
+            onClick={clear}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-gray-100 text-gray-500"
+            aria-label="Clear product search"
+            title="Clear"
+          >
+            <IconX size={16} />
+          </button>
+        ) : null}
+      </div>
+
+      <p className="text-[11px] text-gray-500">
+        Results update as you type. Press <kbd className="px-1 py-0.5 border rounded">Esc</kbd> to close the panel.
+      </p>
+    </div>
+  );
+}
+
+METRIC PANEL CODE:
+
+
+import React from "react";
+import { useAnalyticsControls } from "../../state/controlsContext.jsx";
+
+/**
+ * MetricsPanel
+ *
+ * Behaviour:
+ * - Shows checkboxes for metric columns.
+ * - Uses *pending* visibility if available so changes are staged until the
+ *   TabDropPanel "Apply" commits them (via a reducer action outside this file).
+ * - Falls back gracefully to immediate toggling if pending state is not present.
+ */
+export default function MetricsPanel() {
+  const { state, dispatch } = useAnalyticsControls();
+
+  // Prefer pending state if the store provides it, otherwise fall back to live.
+  const hasPending =
+    state?.pendingMetricsVisible != null || state?.pending?.metricsVisible != null;
+
+  const pending =
+    state?.pendingMetricsVisible ??
+    state?.pending?.metricsVisible ??
+    state?.metricsVisible ?? {};
+
+  // Determine the list of metric keys to render.
+  const metricKeys = Object.keys(
+    state?.metricsVisible ?? pending ?? { orders: true, units_sold: true, net_revenue: true, aov: true }
+  );
+
+  const toggle = (key) => {
+    if (hasPending) {
+      dispatch({ type: "metrics/pendingToggle", key });
+    } else {
+      // Fallback: no pending layer, toggle live immediately
+      dispatch({ type: "metrics/toggle", key });
+    }
+  };
+
+  return (
+    <div className="p-4 space-y-3">
+      {metricKeys.map((key) => (
+        <label key={key} className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="h-3 w-3"
+            checked={!!pending[key]}
+            onChange={() => toggle(key)}
+          />
+          <span className="capitalize">{labelForMetric(key)}</span>
+        </label>
+      ))}
+      {!hasPending && (
+        <p className="mt-2 text-[11px] text-gray-500">
+          Changes apply immediately (no staging layer detected).
+        </p>
+      )}
+    </div>
+  );
+}
+
+function labelForMetric(key) {
+  switch (key) {
+    case "orders":
+      return "Orders";
+    case "units_sold":
+      return "Units";
+    case "net_revenue":
+      return "Net Revenue";
+    case "aov":
+      return "AOV";
+    default:
+      return key;
+  }
+}
+
+TIME PANEL CODE:
+
+import React from "react";
+import { IconCalendar } from "@tabler/icons-react";
+import { useAnalyticsControls } from "../../state/controlsContext.jsx";
+
+// --- small helpers ---
+const pad2 = (n) => String(n).padStart(2, "0");
+const isYmd = (s) => /^(\d{4})-(\d{2})-(\d{2})$/.test(s);
+const clampMonth = (m) => Math.min(Math.max(1, Number(m || 0)), 12);
+
+function normalizeYmd(value) {
+  if (!value) return "";
+  const m = String(value).trim().match(/^(\d{4})[-\/]?(\d{1,2})[-\/]?(\d{1,2})$/);
+  if (!m) return "";
+  const y = Number(m[1]);
+  const mo = clampMonth(m[2]);
+  const maxD = new Date(y, mo, 0).getDate();
+  const d = Math.min(Math.max(1, Number(m[3] || 0)), maxD);
+  return `${y}-${pad2(mo)}-${pad2(d)}`;
+}
+
+function FieldWithSet({ label, value, setValue, onSet }) {
+  const normalized = normalizeYmd(value);
+  const valid = isYmd(normalized);
+  return (
+    <div className="flex items-center gap-2">
+      <div className="relative shrink-0">
+        <IconCalendar size={16} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+        <span className="pl-7 pr-1 text-sm text-gray-700 select-none">{label}</span>
+      </div>
+      <input
+        type="text"
+        inputMode="numeric"
+        placeholder="YYYY-MM-DD"
+        className={`w-40 px-2 py-1 rounded-md border text-sm focus:ring-2 focus:ring-gray-300 ${
+          valid || value === "" ? "border-gray-300" : "border-red-400"
+        }`}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={(e) => {
+          const n = normalizeYmd(e.target.value);
+          if (n) setValue(n);
+        }}
+      />
+      <button
+        type="button"
+        className="px-2 py-1 text-sm rounded-md border border-gray-300 hover:bg-gray-100"
+        onClick={() => {
+          const n = normalizeYmd(value);
+          if (isYmd(n)) onSet(n);
+        }}
+        disabled={!valid}
+        title={valid ? "Stage this bound" : "Enter YYYY-MM-DD"}
+      >
+        Set
+      </button>
+    </div>
+  );
+}
+
+// Default export: the panel UI (type dates, click Set to stage; parent Apply commits)
+export default function TimePanel() {
+  const { state, dispatch } = useAnalyticsControls();
+  const [start, setStart] = React.useState("");
+  const [end, setEnd] = React.useState("");
+
+  // When parent hits "Reset", TabDropPanel increments resetNonce.
+  // We support that by clearing local inputs when pendingRange is cleared upstream.
+  React.useEffect(() => {
+    if (!state.pendingRange) {
+      setStart("");
+      setEnd("");
+    }
+  }, [state.pendingRange]);
+
+  const stage = (next) => dispatch({ type: "time/stageRange", value: next });
+
+  return (
+    <div className="flex flex-col gap-4">
+      <FieldWithSet
+        label="Start"
+        value={start}
+        setValue={setStart}
+        onSet={(s) => stage({ start: new Date(s), end: state?.pendingRange?.end || null })}
+      />
+      <FieldWithSet
+        label="End"
+        value={end}
+        setValue={setEnd}
+        onSet={(e) => stage({ start: state?.pendingRange?.start || null, end: new Date(e) })}
+      />
+
+      {/* Staged preview */}
+      <div className="text-xs text-gray-500 mt-1">
+        Staged:&nbsp;
+        <code>
+          {state.pendingRange?.start ? new Date(state.pendingRange.start).toISOString().slice(0,10) : "—"}
+          {" → "}
+          {state.pendingRange?.end ? new Date(state.pendingRange.end).toISOString().slice(0,10) : "—"}
+        </code>
+      </div>
+
+      {/* Note: Parent footer "Apply" should dispatch {type: "time/applyPendingRange"} */}
+    </div>
+  );
+}
+
+CONTROLS CONTEXT CODE:
+
+// src/features/analytics/state/controlsContext.jsx
+import React, { createContext, useContext, useMemo, useReducer } from "react";
+
+/**
+ * Single source of truth for Analytics controls (tabs + panels).
+ * Keep this file minimal and deterministic—UI components dispatch actions only.
+ */
+
+// ---- Helpers ---------------------------------------------------------------
+
+const SUFFIX = {
+  product: "prod",
+  product_color: "prod_color",
+  product_size: "prod_size",
+  product_color_size: "prod_color_size",
+};
+
+// If KPI programs are still used, we can derive a kpiId from metric+dimension.
+const makeKpiId = (metric, dimension) =>
+  metric && dimension ? `top_${metric}_${SUFFIX[dimension]}` : null;
+
+// ---- State -----------------------------------------------------------------
+
+const initialState = {
+  // Tab 1 — Products
+  products: [],            // later: [{ id, name }] etc.
+  productQuery: "",        // debounced text used to filter table
+  productQueryLive: "",    // immediate text bound to the input (for UI echo)
+
+  // Tab 2 — Metrics — visibility of table columns (header labels as keys)
+  metricsVisible: {
+    Orders: false,
+    Units: false,
+    "Net Revenue": false,
+    AOV: false,
+  },
+  pendingMetricsVisible: null,
+
+  // (Optional) legacy KPI program fields (safe to keep)
+  metric: "units_sold",
+  dimension: "product",
+
+  // Tab 3 — Time
+  mode: "period",          // "period" | "range"
+  period: "2025-07",       // YYYY-MM
+  range: null,             // { start: Date, end: Date }
+  pendingRange: null,      // staging object while typing in the panel
+
+  // Tab 4 — Elements (placeholders)
+  elements: { seasonality: false, weather: false, holidays: false },
+
+  // Tab 5 — Trends (placeholders)
+  trends: { source: "kepler", stores: [] },
+};
+
+// ---- Reducer ---------------------------------------------------------------
+
+function reducer(state, action) {
+  switch (action.type) {
+    // Products
+    case "products/set":
+      return { ...state, products: action.value ?? [] };
+
+    case "products/setQueryLive":
+      return { ...state, productQueryLive: action.value ?? "" };
+
+    case "products/setQuery":
+      return { ...state, productQuery: action.value ?? "" };
+
+    case "products/clearQuery":
+      return { ...state, productQuery: "", productQueryLive: "" };
+
+    // Metrics visibility
+    case "metrics/toggle": {
+      const key = action.key; // one of: "Orders","Units","Net Revenue","AOV"
+      if (!Object.prototype.hasOwnProperty.call(state.metricsVisible, key)) {
+        return state;
+      }
+      return {
+        ...state,
+        metricsVisible: {
+          ...state.metricsVisible,
+          [key]: action.value ?? !state.metricsVisible[key],
+        },
+      };
+    }
+
+    case "metrics/setMany":
+      // action.value: partial map of header -> boolean
+      return {
+        ...state,
+        metricsVisible: { ...state.metricsVisible, ...(action.value || {}) },
+      };
+
+    case "metrics/clear":
+      return {
+        ...state,
+        metricsVisible: { Orders: false, Units: false, "Net Revenue": false, AOV: false },
+      };
+
+    case "metrics/stageInitIfNeeded": {
+      // Initialize pending from current applied state if not already staged
+      if (state.pendingMetricsVisible) return state;
+      return { ...state, pendingMetricsVisible: { ...state.metricsVisible } };
+    }
+
+    case "metrics/stageToggle": {
+      // Toggle within pending (used while panel is open)
+      const key = action.key;
+      const base = state.pendingMetricsVisible || state.metricsVisible;
+      if (!Object.prototype.hasOwnProperty.call(base, key)) return state;
+      return {
+        ...state,
+        pendingMetricsVisible: {
+          ...base,
+          [key]: action.value ?? !base[key],
+        },
+      };
+    }
+
+    case "metrics/stageSetMany": {
+      const base = state.pendingMetricsVisible || state.metricsVisible;
+      return {
+        ...state,
+        pendingMetricsVisible: { ...base, ...(action.value || {}) },
+      };
+    }
+
+    case "metrics/applyPending": {
+      if (!state.pendingMetricsVisible) return state;
+      return {
+        ...state,
+        metricsVisible: { ...state.pendingMetricsVisible },
+        pendingMetricsVisible: null,
+      };
+    }
+
+    case "metrics/clearPending": {
+      return { ...state, pendingMetricsVisible: null };
+    }
+
+    // Legacy KPI program fields (optional)
+    case "metric/set":
+      return { ...state, metric: action.value };
+
+    case "dimension/set":
+      return { ...state, dimension: action.value };
+
+    // Time
+    case "time/setPeriod":
+      return { ...state, mode: "period", period: action.value, range: null };
+
+    case "time/setRange":
+      return { ...state, mode: "range", range: action.value, period: null };
+
+    case "time/stageRange":
+      // action.value: { start: Date|null, end: Date|null }
+      return { ...state, pendingRange: action.value };
+
+    case "time/applyPendingRange":
+      if (!state.pendingRange) return state;
+      return {
+        ...state,
+        mode: "range",
+        range: state.pendingRange,
+        period: null,
+        pendingRange: null,
+      };
+
+    case "time/clearPendingRange":
+      return { ...state, pendingRange: null };
+
+    // Elements / Trends
+    case "elements/toggle":
+      return { ...state, elements: { ...state.elements, [action.key]: !!action.value } };
+
+    case "trends/set":
+      return { ...state, trends: { ...state.trends, ...action.value } };
+
+    default:
+      return state;
+  }
+}
+
+// ---- Context ---------------------------------------------------------------
+
+const Ctx = createContext({ state: initialState, dispatch: () => {} });
+
+export function AnalyticsControlsProvider({ children }) {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  // Derive kpiId for program-based loaders (kept for compatibility)
+  const kpiId = useMemo(
+    () => makeKpiId(state.metric, state.dimension),
+    [state.metric, state.dimension]
+  );
+
+  // Derive the list of currently visible table columns (B1 headers)
+  const selectedColumnKeys = useMemo(() => {
+    const vis = state.pendingMetricsVisible || state.metricsVisible;
+    return Object.entries(vis)
+      .filter(([, on]) => !!on)
+      .map(([key]) => key);
+  }, [state.metricsVisible, state.pendingMetricsVisible]);
+
+  const value = useMemo(
+    () => ({ state, dispatch, kpiId, selectedColumnKeys }),
+    [state, dispatch, kpiId, selectedColumnKeys]
+  );
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+export function useAnalyticsControls() {
+  return useContext(Ctx);
+}
+
+// 📄 src/features/analytics/registry/tableDataRegistry.js
+//
+// Role: KPI → data → table executor (no mocks, no single-CSV legacy path).
+// Inputs  : kpiId (string) + criteria (period/date/datePrefix/etc.)
+// Outputs : formatted table object for GeneratedTable (columnKeys, rows, totals, meta)
+//
+// Architecture:
+//   registry/kpiRegistry.getKPI → data/loaders/loaderRegistry -> orders/loadRows → data/metrics (group+measure) → logic/processData
+//
+// This file intentionally contains NO parsing logic and NO UI code.
+
+import { getFormattedTableData } from "../logic/processData.js";
+import { getKPI } from "./kpiRegistry.js";
+import { getLoader, DATASET } from "../data/loaders/loaderRegistry.js";
+import { dimensionKey } from "../data/metrics/dimensions.js";
+import { groupBy, computeMeasures } from "../data/metrics/aggregate.js";
+import { isWithinRange } from "@/utilities/time/timeRanges.js";
+// 🔧 New helpers: choose the right dataset loader and sanitize args sent to loaders
+function getDatasetLoader(dataset) {
+  // dataset is a string like 'orders' | 'sales' | 'kepler' ...
+  const key = (dataset && String(dataset).toLowerCase()) || "orders";
+  const dsEnum = DATASET[key] || DATASET.orders;
+  return getLoader(dsEnum);
+}
+
+function buildLoadArgs(criteria = {}) {
+  // Loaders only accept period | periods | range (keep them pure)
+  const out = {};
+  if (Array.isArray(criteria.periods) && criteria.periods.length) out.periods = [...criteria.periods];
+  if (typeof criteria.period === "string") out.period = criteria.period;
+  if (criteria.range && typeof criteria.range === "object") out.range = criteria.range;
+  return out;
+}
+
+// Preserve legacy filtering behavior at the table layer while loaders stay pure.
+function applyDateAndLimit(rows, { date, datePrefix, range, limit, params } = {}) {
+  let out = rows;
+
+  // date / prefix (unchanged)
+  if (date || datePrefix) {
+    out = out.filter((r) => {
+      const s = String(r["Order Date/Time"] ?? "");
+      if (date && !s.startsWith(date)) return false;
+      if (datePrefix && !s.startsWith(datePrefix)) return false;
+      return true;
+    });
+  }
+
+  // Trim by custom range if provided (compare using YYYY-MM-DD slice)
+  if (range?.start && range?.end) {
+    out = out.filter((r) => {
+      const s = String(r["Order Date/Time"] ?? "");
+      const ymd = s.slice(0, 10); // "YYYY-MM-DD"
+      return isWithinRange(ymd, range);
+    });
+  }
+
+  // Optional product name search (case-insensitive, substring)
+  const q = params?.search ? String(params.search).trim().toLowerCase() : "";
+  if (q) {
+    out = out.filter((r) => {
+      const name = String(r["Product Name"] ?? r.product_name ?? "").toLowerCase();
+      return name.includes(q);
+    });
+  }
+
+  // Final limit
+  if (Number.isFinite(limit)) out = out.slice(0, limit);
+  return out;
+}
+
+/**
+ * Build one display row from a bucket key + computed measures,
+ * respecting the program's dimension so columns appear consistently.
+ */
+function buildDisplayRow(program, key, measures) {
+  const parts = key.split("|"); // product | (color?) | (size?)
+  const row = { "Product Name": parts[0] || "" };
+
+  if (program.dimension.includes("product_color")) {
+    row["Color"] = parts[1] || "";
+  }
+  if (program.dimension.includes("product_size")) {
+    // when color+size, size is last; when only size, it's parts[1]
+    const sizePart = program.dimension === "product_size" ? parts[1] : parts.at(-1);
+    row["Size"] = sizePart || "";
+  }
+
+  // Standard measures we support across Top Performers
+  row["Orders"] = measures.orders ?? 0;
+  row["Units"] = measures.units ?? 0;
+  row["Net Revenue"] = measures.net_revenue ?? 0;
+  row["AOV"] = measures.aov ?? 0;
+
+  // If/when attach_rate is computed, include it automatically
+  if (typeof measures.attach_rate === "number") {
+    row["Attach Rate"] = measures.attach_rate;
+  }
+
+  return row;
+}
+
+/**
+ * Public API: fetch, aggregate, and format a table for any KPI program.
+ * @param {string} kpiId - e.g., "top_aov_prod"
+ * @param {object} criteria - { period, date, datePrefix, channel, status, limit, params }
+ * @returns {Promise<{ columnKeys, rows, totals, rowCount, columnCount, meta }>}
+ */
+export async function getTableForKPI(kpiId, criteria = {}) {
+  // 1) Resolve the program configuration
+  const program = getKPI(kpiId); // throws helpful error if missing
+  // 2) Resolve the correct dataset loader from the KPI definition (defaults to 'orders')
+  const load = getDatasetLoader(program.dataset);
+  const loadArgs = buildLoadArgs(criteria);
+  // 2) Load rows via standardized loader registry for the KPI's dataset
+  const rowsRaw = await load(loadArgs);
+  const rows = applyDateAndLimit(rowsRaw, criteria);
+  const period = criteria.period ?? null;
+  const loadMeta = null; // reserved for future: loaders may return richer meta
+
+  // 3) Group rows by the program's dimension (product / product_color / product_size / product_color_size)
+  const keyFn = dimensionKey[program.dimension];
+  if (!keyFn) throw new Error(`Unknown dimension: ${program.dimension}`);
+  const buckets = groupBy(rows, keyFn); // Map<key, row[]>
+
+  // 4) Compute measures per bucket and build display rows
+  const rolled = [];
+  for (const [key, bucketRows] of buckets.entries()) {
+    const m = computeMeasures(program.metric, bucketRows); // { orders, units, net_revenue, aov, attach_rate? }
+    rolled.push(buildDisplayRow(program, key, m));
+  }
+  // 4.5) Optional sort & limit from criteria (or program preset)
+  let sorted = rolled;
+  const s = criteria?.sort;
+  if (s && s.key) {
+    const dir = s.dir === "asc" ? "asc" : "desc";
+    sorted = [...rolled].sort((a, b) => {
+      const av = a?.[s.key];
+      const bv = b?.[s.key];
+      const an = typeof av === "number" && Number.isFinite(av);
+      const bn = typeof bv === "number" && Number.isFinite(bv);
+      let cmp;
+      if (an && bn) {
+        cmp = av - bv;
+      } else {
+        const as = av == null ? "" : String(av);
+        const bs = bv == null ? "" : String(bv);
+        cmp = as.localeCompare(bs, undefined, { numeric: true, sensitivity: "base" });
+      }
+      return dir === "asc" ? cmp : -cmp;
+    });
+  }
+  const hardLimit = criteria?.limit ?? program?.columns?.limit;
+  if (Number.isFinite(hardLimit) && hardLimit > 0) {
+    sorted = sorted.slice(0, hardLimit);
+  }
+
+  // 5) Hand off to your existing table formatter with program's column preset
+  const table = getFormattedTableData(sorted, program.columns || {});
+
+  // 6) Attach minimal meta so the UI can show context/warnings if desired
+  table.meta = {
+    ...(table.meta || {}),
+    period: criteria.period ?? period ?? null,
+    scope: program.scope,
+    kpiId,
+    dimension: program.dimension,
+    metric: program.metric,
+    sort: s || null,
+    limit: hardLimit ?? null,
+    loadMeta: loadMeta ?? null,
+  };
+
+  return table;
+}
+
+// Default export (optional convenience): namespace-like object
+export default {
+  getTableForKPI,
+};
+
+TAB DROP PAEL CODE: 
+
+// ------------------------------------------------------------------
+// TabDropPanel.jsx – Visual drop-down panel shell (animation + outside click)
+//    Headless: parent supplies the content component per tab.
+// ------------------------------------------------------------------
+
+import React, { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
+
+export default function TabDropPanel({
+  isOpen,
+  onClose,
+  activeTab,
+  PanelComponent,
+  panelProps = {},
+  onApply,
+  onReset,
+}) {
+  const panelRef = useRef();
+  const applyFnRef = useRef(null); // panel can register an apply() here
+  const [resetNonce, setResetNonce] = useState(0); // lets panels react to resets
+
+  const handleRegister = (fn) => {
+    applyFnRef.current = typeof fn === "function" ? fn : null;
+  };
+
+// Close on outside click (but ignore clicks on the tab bar wrapper)
+useEffect(() => {
+  function handleClickOutside(e) {
+    // If the click happened on/inside the tab bar wrapper, ignore it.
+    // (Analytics.jsx will mark that wrapper with data-ignore-outside="true")
+    if (e.target?.closest?.('[data-ignore-outside="true"]')) return;
+
+    if (panelRef.current && !panelRef.current.contains(e.target)) {
+      onClose?.();
+    }
+  }
+
+  if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, [isOpen, onClose]);
+  return (
+    <div className="relative w-full">
+      <AnimatePresence mode="wait">
+        {isOpen && (
+          <motion.div
+            ref={panelRef}
+            key="dropdown-panel"
+            className="absolute left-0 top-full w-full rounded-md bg-white shadow-lg border border-gray-200 z-[99]"
+            initial={{ opacity: 1, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0, transitionEnd: { display: "none" } }}
+            transition={{
+              opacity: { duration: 0.5, ease: "easeInOut" },
+              height: { duration: 0.1, ease: "easeInOut" },
+            }}
+            style={{ overflow: "hidden" }}
+          >
+            {/* Sticky Header */}
+            <div className="border-b border-gray-200 px-4 py-2 bg-white sticky top-0 z-10">
+              <div className="text-sm font-semibold text-gray-800">
+                {activeTab ? `${activeTab} Filter Panel` : "Filter Panel"}
+              </div>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="max-h-[300px] overflow-y-auto px-4 py-6">
+              {PanelComponent ? (
+                <PanelComponent
+                  key={activeTab}
+                  resetNonce={resetNonce}
+                  onRegister={handleRegister}
+                  {...panelProps}
+                />
+              ) : (
+                <div className="text-sm text-gray-500">
+                  No panel configured for this tab yet.
+                </div>
+              )}
+            </div>
+
+            {/* Sticky footer */}
+            <div className="border-t border-gray-200 px-4 py-2 flex justify-end bg-white sticky bottom-0 gap-3">
+              <button
+                className="text-sm text-gray-500 hover:text-gray-700"
+                onClick={() => {
+                  setResetNonce((n) => n + 1);
+                  onReset?.();
+                }}
+              >
+                Reset
+              </button>
+              <button
+                className="bg-gray-900 text-white px-3 py-1 text-sm rounded-md hover:bg-gray-800"
+                onClick={async () => {
+                  try {
+                    // let the panel commit its local draft to global state
+                    if (applyFnRef.current) {
+                      await applyFnRef.current();
+                    }
+                    onApply?.();
+                  } finally {
+                    onClose?.(); // keep your close-on-apply behavior
+                  }
+                }}
+              >
+                Apply
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

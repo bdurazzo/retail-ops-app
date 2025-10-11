@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Line Items Grouping</title>
+</head>
+<body>
+    <h1>Testing Line Items Grouping</h1>
+    <button onclick="testRawLineItems()">Test Raw Line Items</button>
+    <button onclick="testGroupedLineItems()">Test Grouped Line Items</button>
+    <div id="results"></div>
+
+    <script type="module">
+        import { loadCSVData, toTable } from './src-new/core/utils/tableConfig.js';
+        
+        window.testRawLineItems = async function() {
+            const results = document.getElementById('results');
+            results.innerHTML = 'Loading raw line items...';
+            
+            try {
+                const data = await loadCSVData('/data/retail/orders/2025/2025-08/line_items.csv');
+                const table = toTable(data, { 
+                    scope: 'line_items',
+                    columns: ['product_name', 'color', 'size', 'quantity', 'discounted_price'],
+                    groupBy: false // No grouping
+                });
+                
+                results.innerHTML = `
+                    <h3>Raw Line Items</h3>
+                    <p>Total rows: ${table.rows.length}</p>
+                    <p>Sample rows:</p>
+                    <pre>${JSON.stringify(table.rows.slice(0, 5), null, 2)}</pre>
+                    <p>Totals: ${JSON.stringify(table.totals, null, 2)}</p>
+                `;
+            } catch (error) {
+                results.innerHTML = `<h3>Error:</h3><p>${error.message}</p>`;
+            }
+        };
+        
+        window.testGroupedLineItems = async function() {
+            const results = document.getElementById('results');
+            results.innerHTML = 'Loading grouped line items...';
+            
+            try {
+                const data = await loadCSVData('/data/retail/orders/2025/2025-08/line_items.csv');
+                const table = toTable(data, { 
+                    scope: 'line_items',
+                    columns: ['product_name', 'color', 'size', 'quantity', 'discounted_price'],
+                    groupBy: ['product_name', 'color', 'size'], // Group by product variants
+                    aggregation: 'sum'
+                });
+                
+                results.innerHTML = `
+                    <h3>Grouped Line Items (by Product + Color + Size)</h3>
+                    <p>Original rows: ${data.length}</p>
+                    <p>Grouped rows: ${table.rows.length}</p>
+                    <p>Sample grouped rows:</p>
+                    <pre>${JSON.stringify(table.rows.slice(0, 5), null, 2)}</pre>
+                    <p>Totals: ${JSON.stringify(table.totals, null, 2)}</p>
+                `;
+            } catch (error) {
+                results.innerHTML = `<h3>Error:</h3><p>${error.message}</p>`;
+            }
+        };
+    </script>
+</body>
+</html>

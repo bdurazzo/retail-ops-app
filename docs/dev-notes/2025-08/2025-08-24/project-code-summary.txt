@@ -1,0 +1,244 @@
+FILSON PORTLAND RETAIL OPERATIONS APP - CODE SUMMARY & DATA PIPELINE ARCHITECTURE
+
+====================================================================================
+PROJECT OVERVIEW
+====================================================================================
+
+This is a React-based retail operations application called "Filson Portland" built with Vite, 
+featuring a mobile-first design (390px x 844px viewport). The app provides multiple 
+specialized views for retail store management including analytics, store dashboards, 
+product catalogs, and an AI assistant interface.
+
+Technology Stack:
+- React 18 with JSX
+- Vite build system
+- TailwindCSS for styling
+- Papa Parse for CSV processing
+- Chart.js & Recharts for visualization
+- Day.js for date/time handling
+- Various UI libraries (Heroicons, Tabler Icons, Framer Motion)
+
+====================================================================================
+APPLICATION ARCHITECTURE
+====================================================================================
+
+MAIN ENTRY POINT (App.jsx):
+- Single-page application with tab-based navigation
+- Five main sections: Store, Catalog, Zones, Analytics, Assistant
+- Mobile-optimized UI with fixed header (60px) and bottom tab bar (56px)
+- Main content area is scrollable (728px height)
+
+NAVIGATION STRUCTURE:
+┌─ Store Dashboard (Primary KPIs, trends, overview)
+├─ Catalog (Product search and browsing)
+├─ Zones (Placeholder for future zone management)
+├─ Analytics (Advanced reporting and data analysis)
+└─ Assistant (AI-powered retail assistance)
+
+====================================================================================
+DATA PIPELINE ARCHITECTURE
+====================================================================================
+
+The application features a sophisticated multi-layered data pipeline designed for 
+processing retail order data with temporal and geographical considerations:
+
+LAYER 1: CORE INFRASTRUCTURE
+----------------------------
+
+1. HTTP PROVIDER (HttpStaticProvider.js):
+   - Handles all HTTP requests with cache control
+   - Supports both JSON and text responses
+   - Error handling with detailed status codes
+
+2. MANIFEST CLIENT (ManifestClient.js):
+   - Manages data registry/index files
+   - Provides month listing capabilities
+   - Caches manifest data for performance
+
+3. PATH RESOLVER (PathResolver.js):
+   - Resolves file paths using template patterns
+   - Supports multiple candidate URLs for data files
+   - Handles year/month directory structures
+
+4. DATA SOURCES CONFIG (dataSources.js):
+   - Centralized configuration for data endpoints
+   - Defines URL patterns for orders data
+   - Structure: /data/newstore/orders/{yyyy}/{yyyy-mm}/{yyyy-mm}_orders_in_store.csv
+
+LAYER 2: DATA NORMALIZATION
+---------------------------
+
+ORDER NORMALIZER (ordersNormalizer.js):
+- Advanced timezone conversion system
+- Multi-strategy date parsing (5 different approaches)
+- Timezone mapping (EDT/EST -> America/New_York, etc.)
+- Source timezone: America/New_York (Eastern)
+- Target timezone: America/Los_Angeles (Pacific)
+- Numerical data cleaning (removes $, commas)
+- Robust error handling with fallbacks
+
+Key Normalization Features:
+- Handles multiple date formats: "YYYY-MM-DD h:mmA", "YYYY-MM-DD hh:mmA"
+- Timezone abbreviation mapping to IANA standards
+- Financial data sanitization
+- Preserves original data while adding normalized fields
+
+LAYER 3: REPOSITORY PATTERN
+---------------------------
+
+ORDERS REPOSITORY (OrdersRepository.js):
+- Implements data access layer for order information
+- Fetches data by month ranges using manifest
+- Parallel loading of multiple CSV files
+- Comprehensive error handling and missing data tracking
+- Returns structured result: { rows, present, missing }
+
+Data Flow:
+1. Queries manifest for available months
+2. Filters months by date range
+3. Attempts to load each month's CSV file
+4. Normalizes all successful rows
+5. Tracks missing/failed months for reporting
+
+LAYER 4: BUSINESS LOGIC SERVICE
+-------------------------------
+
+ANALYTICS SERVICE (AnalyticsService.js):
+- Orchestrates repository and adapter layers
+- Applies filtering and transformation logic
+- Handles time, product, and metric scoping
+
+ADAPTER SYSTEM:
+- timeAdapter.js: Date range filtering
+- productAdapter.js: Product-based filtering  
+- metricAdapter.js: Metric calculations and aggregations
+
+LAYER 5: DATA TRANSFORMATION
+----------------------------
+
+FEEDERS:
+- tableFeeder.js: Converts raw data to table format
+- chartFeeder.js: Prepares data for visualization
+
+DTOs (Data Transfer Objects):
+- QueryDTO.js: Query parameter normalization
+- TableDTO.js: Table structure definitions
+- ChartDTO.js: Chart data formatting
+
+====================================================================================
+FEATURE MODULES
+====================================================================================
+
+ANALYTICS MODULE:
+- Complex query system with time, product, and metric filters
+- Real-time data processing and visualization
+- Tabbed interface for different filter types
+- Chart and table display components
+- Status tracking for data availability
+
+Components:
+- Panel.jsx: Filter interface shell
+- Menu.jsx: Dropdown panels for filters
+- Chart.jsx: Data visualization
+- Table.jsx: Tabular data display
+- StatusDisplay.jsx: Query status and missing data alerts
+
+Query System:
+- Time-based filtering (date ranges)
+- Product filtering (by name, category, etc.)
+- Metric calculations (revenue, quantities, etc.)
+- Real-time updates with loading states
+
+STORE DASHBOARD:
+- Overview cards with key performance indicators
+- Visual trend analysis
+- Store-specific metrics and insights
+
+CATALOG MODULE:
+- CSV-based product catalog loading
+- Real-time search functionality (title, brand, product ID)
+- Image handling with fallbacks
+- JSON-in-CSV parsing for complex attributes
+- Responsive grid layout for mobile viewing
+
+Data Processing:
+- Papa Parse for CSV processing
+- JSON attribute parsing (images, identifiers)
+- Primary image selection logic
+- Currency formatting with Intl.NumberFormat
+
+====================================================================================
+DATA FLOW SUMMARY
+====================================================================================
+
+1. USER INTERACTION
+   ↓
+2. REACT HOOKS (useAnalyticsQuery)
+   ↓
+3. ANALYTICS SERVICE (business logic)
+   ↓
+4. ORDERS REPOSITORY (data access)
+   ↓
+5. CORE INFRASTRUCTURE (HTTP, paths, manifest)
+   ↓
+6. CSV FILES (static data storage)
+   ↓
+7. NORMALIZATION (timezone, currency, dates)
+   ↓
+8. ADAPTERS (filtering, scoping)
+   ↓
+9. FEEDERS (data transformation)
+   ↓
+10. UI COMPONENTS (visualization)
+
+====================================================================================
+KEY ARCHITECTURAL DECISIONS
+====================================================================================
+
+1. STATIC FILE ARCHITECTURE:
+   - Uses static CSV files served from /public/data/
+   - No backend database, all processing client-side
+   - Manifest-driven data discovery
+
+2. TIMEZONE HANDLING:
+   - Sophisticated multi-strategy parsing
+   - Conversion from Eastern to Pacific time
+   - Preserves original timestamps
+
+3. ERROR RESILIENCE:
+   - Graceful handling of missing data files
+   - Multiple parsing strategies for dates
+   - Detailed error reporting and fallbacks
+
+4. PERFORMANCE CONSIDERATIONS:
+   - Caching of manifest data
+   - Lazy loading of CSV files
+   - Efficient React re-rendering patterns
+
+5. MODULAR DESIGN:
+   - Clear separation of concerns
+   - Repository pattern for data access
+   - Adapter pattern for data transformation
+   - DTO pattern for type safety
+
+====================================================================================
+DEVELOPMENT & DEBUGGING
+====================================================================================
+
+The application includes extensive console logging for debugging:
+- Data loading progress
+- Timezone conversion details
+- Missing file tracking
+- Query execution flow
+
+Build Scripts:
+- npm run dev: Development server
+- npm run build: Production build
+- npm run smoke:orders: Data validation script
+
+The codebase follows React best practices with hooks, proper state management,
+and component composition patterns. The data pipeline is designed to handle
+real-world retail data challenges including timezone complexity, missing files,
+and varying data formats.
+
+====================================================================================

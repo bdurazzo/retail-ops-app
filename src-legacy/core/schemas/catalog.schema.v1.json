@@ -1,0 +1,14 @@
+{
+  "$id": "catalog.schema.v1.json",
+  "title": "Product Catalog Schema",
+  "type": "object",
+  "properties": {
+    "product_id": { "type": "string" },
+    "title": { "type": "string" },
+    "variation_color_value": { "type": ["string", "null"] },
+    "variation_size_value": { "type": ["string", "null"] },
+    "price": { "type": "number" },
+    "is_available": { "type": "boolean" }
+  },
+  "required": ["product_id", "title", "price"]
+}

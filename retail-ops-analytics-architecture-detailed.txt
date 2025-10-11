@@ -1,0 +1,553 @@
+RETAIL-OPS-APP: ANALYTICS ARCHITECTURE DETAILED SUMMARY
+================================================================
+
+LAST UPDATED: 2025-09-01
+PROJECT STATUS: Active Development - Analytics Feature Complete with Layered Architecture
+
+================================================================
+PROJECT OVERVIEW
+================================================================
+
+This is a React-based retail operations application with a sophisticated analytics engine built around order data processing. The application follows a clean, layered architecture pattern with separation of concerns between UI, business logic, data access, and transformation layers.
+
+KEY TECHNOLOGIES:
+- React 18 with functional components and hooks
+- Vite build system  
+- Papa Parse for CSV processing
+- Day.js for date manipulation
+- Local storage for query persistence
+- Static file serving for data access
+
+================================================================
+PROJECT STRUCTURE (src/ directory tree)
+================================================================
+
+src/
+├── App.jsx                           # Main application component
+├── main.jsx                          # Application entry point
+├── index.css                         # Global styles
+├── components/                       # Shared UI components
+│   └── test/
+│       └── CatalogTestPage.jsx       # Test component for catalog functionality
+├── core/                             # Core infrastructure services
+│   ├── config/
+│   │   ├── catalogSources.js         # Catalog data source configuration
+│   │   └── dataSources.js           # Orders data source configuration
+│   ├── engines/
+│   │   ├── CoreDiscoveryEngine.js    # Pattern discovery engine
+│   │   ├── Layer2QuestionGenerator.js # Question generation engine
+│   │   ├── PatternDiscoveryEngine.js  # Advanced pattern analysis
+│   │   ├── index.js                  # Engine exports
+│   │   └── README.md                 # Engine documentation
+│   ├── io/
+│   │   └── HttpStaticProvider.js     # HTTP client for static file access
+│   ├── paths/
+│   │   ├── ManifestClient.js         # JSON manifest reader
+│   │   └── PathResolver.js           # Dynamic path resolution
+│   ├── schemas/
+│   │   ├── catalog.schema.v1.json    # Catalog data validation schema
+│   │   └── ordersInStore.schema.v1.json # Orders data validation schema
+│   └── utils/
+│       ├── catalogNormalizer.js      # Catalog data transformation
+│       ├── ordersNormalizer.js       # Orders data transformation
+│       ├── tableSorting.js           # Generic table sorting utilities
+│       └── timezoneConverter.js      # EDT to PDT conversion
+├── features/                         # Feature-based modules
+│   ├── analytics/                    # MAIN ANALYTICS FEATURE
+│   │   ├── adapters/                 # Data transformation layer
+│   │   │   ├── metric/               # Metric calculation adapters
+│   │   │   │   ├── kpis/            # Individual KPI calculators
+│   │   │   │   │   ├── attachRate.js
+│   │   │   │   │   ├── averageOrderValue.js
+│   │   │   │   │   ├── index.js      # KPI exports
+│   │   │   │   │   ├── orderVelocity.js
+│   │   │   │   │   ├── quantitySold.js
+│   │   │   │   │   └── totalRevenue.js
+│   │   │   │   ├── metricAdapter.js  # Main metric processing logic
+│   │   │   │   └── utils/
+│   │   │   │       ├── columnConfig.js # Dynamic column configuration
+│   │   │   │       └── kpiUtils.js    # KPI calculation utilities
+│   │   │   ├── product/              # Product filtering adapters
+│   │   │   │   ├── catalogAdapter.js
+│   │   │   │   └── productAdapter.js
+│   │   │   └── time/                 # Time filtering adapters
+│   │   │       └── timeAdapter.js
+│   │   ├── components/               # UI components for analytics
+│   │   │   ├── StatusDisplay.jsx     # Status and error display
+│   │   │   ├── charts/
+│   │   │   │   └── Chart.jsx         # Chart visualization component
+│   │   │   ├── displays/
+│   │   │   │   ├── TabDisplay.jsx    # Active query display
+│   │   │   │   └── time/
+│   │   │   │       └── timeField.js  # Time field formatting
+│   │   │   ├── menus/
+│   │   │   │   ├── Menu.css          # Menu styling
+│   │   │   │   └── Menu.jsx          # Dropdown menu system
+│   │   │   ├── panels/               # Filter panel system
+│   │   │   │   ├── Panel.jsx         # Main panel container
+│   │   │   │   └── tabs/             # Individual filter tabs
+│   │   │   │       ├── index.js      # Tab routing configuration
+│   │   │   │       ├── element/
+│   │   │   │       │   └── Element.jsx
+│   │   │   │       ├── metric/
+│   │   │   │       │   ├── KpiMenu.jsx # KPI selection interface
+│   │   │   │       │   └── Metric.jsx
+│   │   │   │       ├── product/
+│   │   │   │       │   ├── Product.jsx
+│   │   │   │       │   └── StyleSearch.jsx
+│   │   │   │       ├── time/
+│   │   │   │       │   ├── Calendar.jsx # Date range picker
+│   │   │   │       │   └── Time.jsx
+│   │   │   │       └── trend/
+│   │   │   │           └── Trend.jsx
+│   │   │   └── tables/
+│   │   │       └── Table.jsx         # Data table component
+│   │   ├── dtos/                     # Data Transfer Objects
+│   │   │   ├── ChartDTO.js           # Chart data structure
+│   │   │   ├── QueryDTO.js           # Query normalization and defaults
+│   │   │   └── TableDTO.js           # Table data structure
+│   │   ├── feeders/                  # Data transformation to UI format
+│   │   │   ├── chartFeeder.js        # Chart data formatting
+│   │   │   └── tableFeeder.js        # Table data formatting
+│   │   ├── hooks/                    # React hooks
+│   │   │   └── useAnalyticsQuery.js  # Main analytics query hook
+│   │   ├── repositories/             # Data access layer
+│   │   │   ├── CatalogRepository.js  # Catalog data access
+│   │   │   └── OrdersRepository.js   # Orders data access
+│   │   └── services/                 # Business logic layer
+│   │       ├── AnalyticsService.js   # Main analytics orchestration
+│   │       └── ProductValidationService.js # Product validation
+│   ├── assistant/                    # AI Assistant feature
+│   │   └── components/
+│   │       ├── AssistantDashboard.jsx
+│   │       └── SurveyUI.jsx
+│   ├── catalog/                      # Product catalog feature
+│   │   ├── components/
+│   │   │   ├── CatalogFilters.jsx
+│   │   │   ├── CatalogGrid.jsx
+│   │   │   ├── CatalogSearch.jsx
+│   │   │   └── ProductCard.jsx
+│   │   ├── hooks/
+│   │   │   ├── useCatalog.js
+│   │   │   └── useProductSearch.js
+│   │   ├── repositories/
+│   │   │   └── CatalogRepository.js
+│   │   ├── services/
+│   │   │   └── CatalogService.js
+│   │   └── utils/
+│   │       ├── productClassifier.js
+│   │       └── searchIndexer.js
+│   └── store/                        # Store dashboard feature
+│       └── components/
+│           ├── OverviewCard.jsx
+│           └── VisualStoreTrends.jsx
+└── pages/                            # Top-level page components
+    ├── Analytics.jsx                 # Main analytics page
+    ├── Assistant.jsx                 # AI assistant page
+    ├── Catalog.jsx                   # Product catalog page
+    ├── Store.jsx                     # Store dashboard page
+    └── Zones.jsx                     # Zone management page
+
+================================================================
+ANALYTICS FEATURE ARCHITECTURE - DETAILED FLOW
+================================================================
+
+The analytics feature follows a strict layered architecture with clear data flow:
+
+LAYER 1: PRESENTATION (React Components)
+----------------------------------------
+Entry Point: src/pages/Analytics.jsx
+- Manages UI state (tabs, panels, loading)
+- Integrates with useAnalyticsQuery hook
+- Handles query persistence in localStorage
+- Renders Chart, Table, and filter panels
+
+UI Component Hierarchy:
+Analytics.jsx (page)
+├── Panel.jsx (tab buttons)
+├── Menu.jsx (dropdown container)
+│   └── [Dynamic Panel Components] (filters)
+├── Chart.jsx (visualization)
+├── TabDisplay.jsx (active filters display)
+└── Table.jsx (data grid)
+
+LAYER 2: BUSINESS LOGIC (Hooks & Services)
+-----------------------------------------
+useAnalyticsQuery Hook (src/features/analytics/hooks/useAnalyticsQuery.js):
+- Accepts query object from UI
+- Normalizes query via QueryDTO
+- Calls AnalyticsService for data
+- Manages loading/error states
+- Transforms raw data via tableFeeder
+
+AnalyticsService (src/features/analytics/services/AnalyticsService.js):
+- Orchestrates the complete data pipeline
+- Calls OrdersRepository for raw data
+- Applies adapters in sequence: Time → Product → Metric
+- Returns processed data with metadata
+
+LAYER 3: DATA TRANSFORMATION (Adapters)
+--------------------------------------
+Three sequential adapters transform the data:
+
+1. Time Adapter (src/features/analytics/adapters/time/timeAdapter.js):
+   - Filters rows by date range (startDate to endDate)
+   - Handles timezone-normalized datetime fields
+   - Preserves rows with missing dates
+
+2. Product Adapter (src/features/analytics/adapters/product/productAdapter.js):
+   - Filters by product IDs, colors, sizes
+   - Simple array inclusion filtering
+   - Returns filtered subset of rows
+
+3. Metric Adapter (src/features/analytics/adapters/metric/metricAdapter.js):
+   - Calculates KPIs using individual calculator functions
+   - Handles grouped vs ungrouped data scenarios
+   - Attaches __kpis metadata to each row
+   - Creates grouped rows when KPIs require grouping
+
+KPI Calculators (src/features/analytics/adapters/metric/kpis/):
+- totalRevenue.js: Sums "Product Net" field
+- quantitySold.js: Counts total quantity
+- averageOrderValue.js: Revenue / order count
+- Each returns calculated value or metadata object
+
+LAYER 4: DATA ACCESS (Repositories)
+----------------------------------
+OrdersRepository (src/features/analytics/repositories/OrdersRepository.js):
+- Manages CSV file loading via HTTP requests
+- Uses ManifestClient to discover available months
+- Uses PathResolver to generate candidate URLs
+- Applies ordersNormalizer for timezone conversion
+- Returns { rows, present, missing } with metadata
+
+Core Infrastructure:
+- HttpStaticProvider: HTTP client for static files
+- ManifestClient: Reads JSON manifest of available data
+- PathResolver: Template-based URL generation
+- ordersNormalizer: EDT→PDT timezone conversion
+
+LAYER 5: UI DATA TRANSFORMATION (Feeders)
+----------------------------------------
+tableFeeder (src/features/analytics/feeders/tableFeeder.js):
+- Converts processed rows to TableDTO format
+- Uses columnConfig to determine visible columns
+- Applies display labels for user-friendly headers
+- Calculates totals for numeric columns
+- Handles grouped row display logic
+
+================================================================
+CURRENT PIPELINE FLOW - STEP BY STEP
+================================================================
+
+1. USER INTERACTION:
+   - User opens Analytics page (src/pages/Analytics.jsx)
+   - Query loaded from localStorage or defaults to { time: null, metric: null }
+
+2. HOOK INITIALIZATION:
+   - useAnalyticsQuery receives query object
+   - Normalizes query via QueryDTO.normalizeQuery()
+   - If no time range, returns empty state
+
+3. DATA LOADING REQUEST:
+   - AnalyticsService.getOrdersForQuery(query) called
+   - OrdersRepository.findByMonthRange(query.time) called
+   
+4. MANIFEST & PATH RESOLUTION:
+   - ManifestClient fetches /data/newstore/orders/index.json
+   - Filters months within startYYYYMM to endYYYYMM range
+   - PathResolver generates candidate URLs for each month
+
+5. CSV DATA LOADING:
+   - HttpStaticProvider fetches each month's CSV file
+   - Papa Parse processes CSV to JavaScript objects
+   - ordersNormalizer converts EDT to PDT timestamps
+   - Raw rows aggregated with __yyyy, __mm metadata
+
+6. DATA TRANSFORMATION PIPELINE:
+   a) Time Adapter: Filters by exact date range (startDate to endDate)
+   b) Product Adapter: Filters by product criteria (if specified)
+   c) Metric Adapter: Calculates KPIs and groups data (if needed)
+
+7. UI DATA PREPARATION:
+   - tableFeeder.toTableDTO() converts to display format
+   - columnConfig determines visible columns based on active KPIs
+   - Display labels applied (e.g., "Product Net" → "Revenue")
+   - Totals calculated for numeric columns
+
+8. COMPONENT RENDERING:
+   - Table component receives processed data
+   - Chart component renders visualization placeholder
+   - TabDisplay shows active filters
+   - Loading/error states handled throughout
+
+================================================================
+KEY FILES WITH CODE DETAILS
+================================================================
+
+MAIN ANALYTICS PAGE (src/pages/Analytics.jsx):
+----------------------------------------------
+- Manages query state with localStorage persistence
+- Uses useAnalyticsQuery hook for data fetching
+- Implements tab/panel UI interaction logic
+- Renders main analytics components
+
+Key State:
+- query: Current analytics query object
+- activeTab: Currently open filter panel
+- isPanelOpen: Panel visibility state
+
+Key Functions:
+- handleSetActiveTab(): Tab click behavior with smooth transitions
+- handleApply(): Applies filter changes to query
+- handleReset(): Resets query to defaults
+
+ANALYTICS SERVICE (src/features/analytics/services/AnalyticsService.js):
+-----------------------------------------------------------------------
+export const AnalyticsService = {
+  async getOrdersForQuery(query) {
+    const { rows, present, missing } = await OrdersRepository.findByMonthRange(query.time);
+    
+    let scoped = applyTime(rows, query.time);
+    scoped = applyProduct(scoped, query.product);
+    scoped = applyMetric(scoped, query.metric);
+    
+    return { rows: scoped, present, missing };
+  },
+};
+
+This is the central orchestrator that applies all transformations in sequence.
+
+ORDERS REPOSITORY (src/features/analytics/repositories/OrdersRepository.js):
+---------------------------------------------------------------------------
+Key Functions:
+- findByMonthRange(): Main entry point for data loading
+- loadMonth(): Loads and parses individual month CSV files
+- Uses Papa Parse for CSV processing
+- Applies timezone normalization via ordersNormalizer
+
+Data Flow:
+1. ManifestClient lists available months
+2. Filters months within date range
+3. Parallel loading of month CSV files
+4. Returns aggregated rows with metadata
+
+TIME ADAPTER (src/features/analytics/adapters/time/timeAdapter.js):
+-----------------------------------------------------------------
+export function applyTime(rows, timeConfig) {
+  if (!timeConfig || !rows?.length) return rows;
+  return applyDateRange(rows, timeConfig);
+}
+
+function applyDateRange(rows, timeConfig) {
+  const { startDate, endDate } = timeConfig;
+  if (!startDate || !endDate) return rows;
+  
+  return rows.filter(row => {
+    const orderDateStr = row.order_datetime_normalized?.slice(0, 10);
+    return orderDateStr >= startDate && orderDateStr <= endDate;
+  });
+}
+
+Filters rows by exact date range using simple string comparison.
+
+METRIC ADAPTER (src/features/analytics/adapters/metric/metricAdapter.js):
+------------------------------------------------------------------------
+export function applyMetric(rows, metricConfig) {
+  if (!metricConfig || !rows?.length) return rows;
+  
+  const kpiResults = {};
+  let requiresGrouping = false;
+  
+  metricConfig.forEach(kpiName => {
+    if (KPIs[kpiName]) {
+      kpiResults[kpiName] = KPIs[kpiName](rows);
+      if (kpiResults[kpiName].requiresGrouping) {
+        requiresGrouping = true;
+        groupByField = kpiResults[kpiName].groupBy;
+      }
+    }
+  });
+  
+  if (requiresGrouping && groupByField) {
+    return createGroupedRows(rows, groupByField, kpiResults);
+  } else {
+    return rows.map(row => ({ ...row, __kpis: kpiResults }));
+  }
+}
+
+Calculates KPIs and handles data grouping when required.
+
+TABLE FEEDER (src/features/analytics/feeders/tableFeeder.js):
+------------------------------------------------------------
+export function toTableDTO(rows, opts = {}) {
+  if (!rows?.length) return makeEmptyTable();
+  
+  const kpiData = rows[0]?.__kpis || {};
+  const columnKeys = getVisibleColumns(kpiData);
+  
+  const tableRows = rows.map((r, i) => {
+    const row = { "#": i + 1 };
+    columnKeys.forEach(columnKey => {
+      // Dynamic column mapping based on visible columns
+      switch(columnKey) {
+        case "Product Name": row["Product Name"] = r["Product Name"]; break;
+        case "Product Net": row["Product Net"] = r["Product Net"]; break;
+        // ... other column mappings
+      }
+    });
+    return row;
+  });
+  
+  return {
+    columnKeys,
+    displayLabels: columnKeys.map(key => COLUMN_DISPLAY_LABELS[key] || key),
+    rows: tableRows,
+    totals: calculateTotals(tableRows, columnKeys, kpiData),
+    meta: { kpis: kpiData }
+  };
+}
+
+Transforms processed data into table-ready format with dynamic columns.
+
+QUERY DTO (src/features/analytics/dtos/QueryDTO.js):
+---------------------------------------------------
+export const defaultQuery = { time: null, metric: null };
+
+export function normalizeQuery(partial) {
+  const out = { ...defaultQuery };
+  
+  if (partial.time) {
+    const t = partial.time;
+    const start = toYM(t.startYYYYMM ?? t.start);
+    const end = toYM(t.endYYYYMM ?? t.end);
+    const startDate = toYMD(t.startDate);
+    const endDate = toYMD(t.endDate);
+    
+    if (start && end) {
+      out.time = { 
+        startYYYYMM: start, endYYYYMM: end,
+        startDate: startDate, endDate: endDate
+      };
+    }
+  }
+  
+  if (partial.metric) {
+    out.metric = Array.isArray(partial.metric) ? partial.metric : [partial.metric];
+  }
+  
+  return out;
+}
+
+Handles query normalization and provides consistent data structure.
+
+================================================================
+DATA SOURCES AND CONFIGURATION
+================================================================
+
+DATA SOURCES CONFIG (src/core/config/dataSources.js):
+----------------------------------------------------
+export const DATA_SOURCES = {
+  ordersInStore: {
+    manifestUrl: "/data/newstore/orders/index.json",
+    baseDir: "/data/newstore/orders",
+    monthFilePatterns: [
+      "${baseDir}/${yyyy}/${yyyy}-${mm}/${yyyy}-${mm}_orders_in_store.csv",
+    ],
+  },
+  catalog: {
+    manifestUrl: "/data/newstore/catalog/index.json",
+    baseDir: "/data/newstore/catalog", 
+    currentFile: "${baseDir}/storefront-catalog-en-us.csv",
+  }
+};
+
+Expected File Structure:
+/data/newstore/orders/index.json (manifest)
+/data/newstore/orders/2024/2024-01/2024-01_orders_in_store.csv
+/data/newstore/orders/2024/2024-02/2024-02_orders_in_store.csv
+...
+
+PATH RESOLVER (src/core/paths/PathResolver.js):
+----------------------------------------------
+export class PathResolver {
+  constructor({ baseDir, monthFilePatterns }) {
+    this.baseDir = baseDir;
+    this.patterns = monthFilePatterns;
+  }
+  
+  candidates(yyyy, mm) {
+    const vars = { yyyy, mm, baseDir: this.baseDir };
+    return this.patterns.map(p => expand(p, vars));
+  }
+}
+
+Generates URLs from template patterns with variable substitution.
+
+================================================================
+ERROR HANDLING AND RESILIENCE
+================================================================
+
+The system includes comprehensive error handling:
+
+1. MISSING DATA HANDLING:
+   - OrdersRepository tracks present/missing months
+   - UI displays missing month warnings
+   - Graceful degradation with partial data
+
+2. LOADING STATES:
+   - useAnalyticsQuery manages loading/error states
+   - UI shows loading indicators during data fetch
+   - Error messages displayed for failed requests
+
+3. DATA VALIDATION:
+   - Schema files define expected data structure
+   - ordersNormalizer handles malformed data
+   - Fallbacks for missing fields (e.g., dates, revenue)
+
+4. QUERY PERSISTENCE:
+   - localStorage backup for user queries
+   - Graceful fallback to defaults on parse errors
+   - State recovery on page refresh
+
+================================================================
+PERFORMANCE CONSIDERATIONS
+================================================================
+
+1. EFFICIENT DATA LOADING:
+   - Month-based chunking reduces memory usage
+   - Parallel month loading where possible
+   - CSV streaming with Papa Parse
+
+2. TRANSFORMATION PIPELINE:
+   - Sequential adapter application minimizes intermediate copies
+   - Early filtering reduces downstream processing load
+   - Lazy evaluation where possible
+
+3. UI OPTIMIZATION:
+   - React hooks prevent unnecessary re-renders
+   - Local state management reduces prop drilling
+   - Virtualized table rendering for large datasets
+
+4. CACHING STRATEGY:
+   - localStorage for query persistence
+   - ManifestClient caching of month metadata
+   - Static file serving reduces server load
+
+================================================================
+FUTURE EXTENSIBILITY
+================================================================
+
+The architecture supports easy extension:
+
+1. NEW KPIs: Add to src/features/analytics/adapters/metric/kpis/
+2. NEW FILTERS: Add adapters and UI components
+3. NEW DATA SOURCES: Extend repositories and core config
+4. NEW VISUALIZATIONS: Add to components/charts/
+5. NEW EXPORT FORMATS: Add to feeders/
+
+The layered architecture ensures that changes in one layer don't cascade to others, making the system maintainable and extensible.
+
+================================================================
+END OF DETAILED SUMMARY
+================================================================

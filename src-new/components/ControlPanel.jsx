@@ -18,7 +18,7 @@ export default function ControlPanel({
       className={`p-1 rounded transition-all ${
         activeMenu === button.id 
           ? 'bg-gray-900 text-white' 
-          : 'text-gray-600 hover:bg-gray-100'
+          : 'text-gray-600 hover:bg-gray-50'
       }`}
       title={button.title}
       disabled={button.disabled}
@@ -30,23 +30,23 @@ export default function ControlPanel({
   return (
     <div className="w-full">
       {/* Control Bar */}
-      <div className="bg-gradient-to-b from-white to-gray-50 shadow-med">
-        <div className="flex p-1 items-center justify-between">
+      <div className="bg-gradient-to-b from-gray-50 via-white to-gray-200 rounded-t-xl p-2">
+        <div className="flex items-center justify-between">
           {/* Left Side Buttons */}
           <div className="flex items-center relative gap-1">
             {leftButtons.map(renderButton)}
           </div>
 
           {/* Center Controls (conditionally shown) */}
-          <div className="flex items-center gap-2">
+          <div className="flex rounded px-2 items-center gap-2">
             <AnimatePresence initial={false} mode="wait">
               {showCenterControls && centerControls && (
                 <motion.div
                   key="center-controls"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ delay: 0, duration: 0.4, ease: 'easeInOut' }}
+                  exit={{opacity: 0, }}
+                  transition={{ delay: 0, duration: 0.6, ease: 'easeInOut' }}
                   className="flex items-center gap-2"
                 >
                   {centerControls}
@@ -56,7 +56,7 @@ export default function ControlPanel({
           </div>
 
           {/* Right Side Buttons */}
-          <div className="flex items-center gap-1">
+          <div className="flex bg-white px-2 items-center gap-1">
             {rightButtons.map(renderButton)}
           </div>
         </div>

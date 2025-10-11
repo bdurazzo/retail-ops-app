@@ -1,0 +1,1031 @@
+FILSON PORTLAND DATA PIPELINE - COMPLETE SOURCE CODE ROADMAP
+
+This document contains the complete source code for every file in the data pipeline, 
+with detailed explanations of how each component connects to build the analytics system.
+
+====================================================================================
+📋 PIPELINE FLOW OVERVIEW
+====================================================================================
+
+USER ACTION → useAnalyticsQuery Hook → AnalyticsService → OrdersRepository → 
+HttpStaticProvider → CSV Files → PathResolver → ManifestClient → 
+ordersNormalizer → Adapters → Feeders → UI Components
+
+====================================================================================
+🏗️ LAYER 1: CORE INFRASTRUCTURE
+====================================================================================
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/core/io/HttpStaticProvider.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: HTTP client for fetching static files (CSV, JSON) with error handling
+CONNECTS TO: ManifestClient, OrdersRepository
+INPUT: URLs for data files
+OUTPUT: Raw text/JSON data
+═══════════════════════════════════════════════════════════════════════════════════
+
+export class HttpStaticProvider {
+  async getText(url) {
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+    return await r.text();
+  }
+  async getJSON(url) {
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) throw new Error(`HTTP ${r.status} for ${url}`);
+    return await r.json();
+  }
+}
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/core/paths/ManifestClient.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Manages data registry/index files to discover available data months
+CONNECTS TO: HttpStaticProvider (uses), OrdersRepository (used by)
+INPUT: Manifest URL from dataSources config
+OUTPUT: Available months list { yyyy, mm }
+CACHING: Single instance cache for performance
+═══════════════════════════════════════════════════════════════════════════════════
+
+export class ManifestClient {
+  constructor(provider, manifestUrl) {
+    this.provider = provider;
+    this.manifestUrl = manifestUrl;
+    this.cache = null;
+  }
+  async get() {
+    if (this.cache) return this.cache;
+    this.cache = await this.provider.getJSON(this.manifestUrl);
+    return this.cache;
+  }
+  async listMonths() {
+    const m = await this.get();
+    const out = [];
+    for (const yyyy of Object.keys(m.years).sort()) {
+      for (const mm of m.years[yyyy]) out.push({ yyyy, mm });
+    }
+    return out;
+  }
+}
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/core/paths/PathResolver.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Resolves file paths using template patterns with variable substitution
+CONNECTS TO: OrdersRepository (used by), dataSources config (configured by)
+INPUT: Year/month values and path patterns
+OUTPUT: Array of candidate URLs to try
+TEMPLATE VARS: ${yyyy}, ${mm}, ${baseDir}
+═══════════════════════════════════════════════════════════════════════════════════
+
+const expand = (tpl, v) => tpl.replace(/\$\{(\w+)\}/g, (_, k) => v[k] ?? "");
+
+export class PathResolver {
+  constructor({ baseDir, monthFilePatterns }) {
+    this.baseDir = baseDir;
+    this.patterns = monthFilePatterns;
+  }
+  // keep your original signature
+  candidates(yyyy, mm) {
+    const vars = { yyyy, mm, baseDir: this.baseDir, base: this.baseDir };
+    return this.patterns.map(p => expand(p, vars));
+  }
+}
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/core/config/dataSources.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Centralized configuration for data endpoints and URL patterns
+CONNECTS TO: PathResolver, OrdersRepository (configures both)
+PATTERN: Template pattern for CSV file locations
+STRUCTURE: /data/newstore/orders/{yyyy}/{yyyy-mm}/{yyyy-mm}_orders_in_store.csv
+═══════════════════════════════════════════════════════════════════════════════════
+
+export const DATA_SOURCES = {
+  ordersInStore: {
+    manifestUrl: "/data/newstore/orders/index.json",
+    baseDir: "/data/newstore/orders", // served from /public
+    monthFilePatterns: [
+      // include {yyyy} directory before {yyyy}-{mm}
+      "${baseDir}/${yyyy}/${yyyy}-${mm}/${yyyy}-${mm}_orders_in_store.csv",
+    ],
+  },
+};
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 lib/dataPaths.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Universal JSON loader for browser and Node.js environments
+CONNECTS TO: Registry files, smoke test scripts
+INPUT: Relative paths to JSON files
+OUTPUT: Parsed JSON objects
+ENV DETECTION: Auto-detects browser vs Node.js context
+═══════════════════════════════════════════════════════════════════════════════════
+
+// lib/dataPaths.js
+// Canonical access to data/registry/index.json for BOTH browser and node scripts.
+// Exports a consistent API used by loaders and smoke scripts.
+
+const REGISTRY_FILE = "data/registry/index.json";
+
+// ---------- Browser & Node readers ----------
+export async function loadJsonBrowser(relPath) {
+  // Browser fetch; expects dev server to serve /data/**
+  const res = await fetch(`/${relPath}`, { credentials: "same-origin" });
+  if (!res.ok) throw new Error(`loadJsonBrowser: failed ${relPath} (${res.status})`);
+  return res.json();
+}
+
+export async function loadJsonNode(relPath) {
+  const { readFile } = await import("fs/promises");
+  const { resolve } = await import("path");
+  const abs = resolve(process.cwd(), relPath);
+  const text = await readFile(abs, "utf-8");
+  return JSON.parse(text);
+}
+
+// ---------- Single entry point ----------
+export async function getDataPaths({ env = "browser" } = {}) {
+  // Use browser by default; scripts pass { env: "node" }
+  const read = env === "node" ? loadJsonNode : loadJsonBrowser;
+  return read(REGISTRY_FILE);
+}
+
+// ---------- (Optional) tiny helper for mapping dataset IDs ----------
+// If you want the mapping here instead of in the loader registry, you could mirror it.
+// For now, we keep mapping centralized in loaderRegistry.js.
+export default { getDataPaths, loadJsonBrowser, loadJsonNode };
+
+====================================================================================
+📊 LAYER 2: DATA SCHEMA & NORMALIZATION  
+====================================================================================
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/core/schemas/ordersInStore.schema.v1.json
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: JSON Schema defining the structure of order data from CSV files
+CONNECTS TO: Data validation, ordersNormalizer (implicit contract)
+REQUIRED FIELDS: Order ID, Channel, Status, Order Date/Time, Timezone, Product Name
+OPTIONAL FIELDS: Customer info, billing, shipping, associate details
+═══════════════════════════════════════════════════════════════════════════════════
+
+{
+  "$id": "ordersInStore.schema.v1.json",
+  "title": "Orders - In Store (Monthly Export)",
+  "type": "object",
+  "properties": {
+    "Order ID": { "type": "string" },
+    "Channel": { "type": "string", "enum": ["store"] },
+    "Status": { "type": "string" },
+    "Order Date/Time": { "type": "string" },
+    "Timezone": { "type": "string" },
+    "Product Name": { "type": "string" },
+    "Color": { "type": ["string", "null"] },
+    "Size": { "type": ["string", "null"] },
+    "Fulfillment Location": { "type": "string" },
+    "Fulfillment Type": { "type": "string" },
+    "Carrier": { "type": ["string", "null"] },
+    "Product Net": { "type": "number" },
+    "Product Tax": { "type": "number" },
+    "Product Subtotal": { "type": "number" },
+    "Shipping Cost": { "type": "number" },
+    "Currency": { "type": "string" },
+    "Payment Method": { "type": ["string", "null"] },
+    "Email": { "type": ["string", "null"] },
+    "Billing First Name": { "type": ["string", "null"] },
+    "Billing Last Name": { "type": ["string", "null"] },
+    "Billing Phone": { "type": ["string", "null"] },
+    "Billing ZIP": { "type": ["string", "null"] },
+    "Shipping First Name": { "type": ["string", "null"] },
+    "Shipping Last Name": { "type": ["string", "null"] },
+    "Shipping Phone": { "type": ["string", "null"] },
+    "Shipping ZIP": { "type": ["string", "null"] },
+    "Product Catalog Price": { "type": "number" },
+    "Product Price Adjustment": { "type": "number" },
+    "Product Discounted Price": { "type": "number" },
+    "Applied Coupon Code": { "type": ["string", "null"] },
+    "Reason for Discount": { "type": ["string", "null"] },
+    "Reason for Return": { "type": ["string", "null"] },
+    "Associate Name": { "type": ["string", "null"] },
+    "Associate Email": { "type": ["string", "null"] },
+    "Tax Strategy": { "type": ["string", "null"] },
+    "Demand Location": { "type": ["string", "null"] },
+    "Customer Display ID": { "type": ["string", "null"] },
+    "Approver Name": { "type": ["string", "null"] },
+    "Approver Email": { "type": ["string", "null"] }
+  },
+  "required": [
+    "Order ID",
+    "Channel",
+    "Status",
+    "Order Date/Time",
+    "Timezone",
+    "Product Name",
+    "Fulfillment Location",
+    "Fulfillment Type",
+    "Product Net",
+    "Product Subtotal",
+    "Currency"
+  ],
+  "additionalProperties": true
+}
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/core/utils/ordersNormalizer.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Advanced data normalization with timezone conversion and error handling
+CONNECTS TO: OrdersRepository (used by), Day.js library (uses)
+INPUT: Raw CSV row objects with timezone info
+OUTPUT: Normalized rows with Pacific timezone timestamps
+FEATURES: Multi-strategy parsing, timezone mapping, financial data cleaning
+SOURCE TZ: America/New_York (Eastern), TARGET TZ: America/Los_Angeles (Pacific)
+═══════════════════════════════════════════════════════════════════════════════════
+
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc.js";
+import timezone from "dayjs/plugin/timezone.js";
+import customParseFormat from "dayjs/plugin/customParseFormat.js";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(customParseFormat);
+
+const SOURCE_FALLBACK_TZ = "America/New_York";
+const TARGET_TZ = "America/Los_Angeles";
+
+// Map timezone abbreviations to IANA timezone names
+const TIMEZONE_MAPPING = {
+  // Eastern Time
+  "EDT": "America/New_York",    // Eastern Daylight Time
+  "EST": "America/New_York",    // Eastern Standard Time
+  "ET": "America/New_York",     // Eastern Time (generic)
+  
+  // Central Time
+  "CDT": "America/Chicago",     // Central Daylight Time
+  "CST": "America/Chicago",     // Central Standard Time
+  "CT": "America/Chicago",      // Central Time (generic)
+  
+  // Mountain Time
+  "MDT": "America/Denver",      // Mountain Daylight Time
+  "MST": "America/Denver",      // Mountain Standard Time
+  "MT": "America/Denver",       // Mountain Time (generic)
+  
+  // Pacific Time
+  "PDT": "America/Los_Angeles", // Pacific Daylight Time
+  "PST": "America/Los_Angeles", // Pacific Standard Time
+  "PT": "America/Los_Angeles",  // Pacific Time (generic)
+  
+  // Add more as needed for your data
+};
+
+function normalizeTimezone(tzValue) {
+  if (!tzValue) return SOURCE_FALLBACK_TZ;
+  
+  const cleaned = String(tzValue).trim().toUpperCase();
+  
+  // Check if it's already an IANA timezone (contains slash)
+  if (cleaned.includes('/')) {
+    return tzValue; // Assume it's already a valid IANA timezone
+  }
+  
+  // Map abbreviation to IANA timezone
+  const mapped = TIMEZONE_MAPPING[cleaned];
+  if (mapped) {
+    return mapped;
+  }
+  
+  // Log unknown timezones for debugging
+  console.warn(`Unknown timezone abbreviation: "${tzValue}", using fallback: ${SOURCE_FALLBACK_TZ}`);
+  return SOURCE_FALLBACK_TZ;
+}
+
+function toNumber(v) {
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  if (v == null) return 0;
+  if (typeof v === "string") {
+    const n = Number(v.replace(/[$,]/g, "").trim());
+    return Number.isFinite(n) ? n : 0;
+  }
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
+export function normalizeOrdersRow(row) {
+  const out = {};
+  
+  try {
+    out["Product Name"] = row["Product Name"] ?? null;
+    out["Color"]        = row["Color"] ?? null;
+    out["Size"]         = row["Size"] ?? null;
+    out["Product Net"]  = toNumber(row["Product Net"]);
+
+    const src = row["Order Date/Time"] ?? null;
+    const rowTz = normalizeTimezone(row["Timezone"]);
+
+    if (src) {
+      // Try multiple parsing strategies for dates like "2025-06-01 2:13pm"
+      let d = null;
+      
+      // Strategy 1: Most common format - YYYY-MM-DD h:mmA (lowercase 'A' for am/pm)
+      try {
+        d = dayjs.tz(src, "YYYY-MM-DD h:mmA", rowTz);
+        if (d.isValid()) {
+          console.log(`✅ Strategy 1 success: "${src}" -> "${d.toISOString()}"`);
+        }
+      } catch (e) {
+        // Fail silently, try next strategy
+      }
+      
+      // Strategy 2: Try with double-digit hour - YYYY-MM-DD hh:mmA
+      if (!d || !d.isValid()) {
+        try {
+          d = dayjs.tz(src, "YYYY-MM-DD hh:mmA", rowTz);
+          if (d.isValid()) {
+            console.log(`✅ Strategy 2 success: "${src}" -> "${d.toISOString()}"`);
+          }
+        } catch (e) {
+          // Fail silently, try next strategy
+        }
+      }
+      
+      // Strategy 3: Parse without timezone first, then apply timezone
+      if (!d || !d.isValid()) {
+        try {
+          // First parse the date string without any timezone info
+          const naive = dayjs(src, "YYYY-MM-DD h:mmA");
+          if (naive.isValid()) {
+            // Then convert to the source timezone
+            d = naive.tz(rowTz, true); // true = keep the same time but in specified timezone
+            if (d.isValid()) {
+              console.log(`✅ Strategy 3 success: "${src}" -> "${d.toISOString()}"`);
+            }
+          }
+        } catch (e) {
+          // Fail silently, try next strategy
+        }
+      }
+      
+      // Strategy 4: Try with lowercase 'a' - YYYY-MM-DD h:mma
+      if (!d || !d.isValid()) {
+        try {
+          d = dayjs.tz(src, "YYYY-MM-DD h:mma", rowTz);
+          if (d.isValid()) {
+            console.log(`✅ Strategy 4 success: "${src}" -> "${d.toISOString()}"`);
+          }
+        } catch (e) {
+          // Fail silently
+        }
+      }
+
+      // Strategy 5: Let dayjs try to parse it naturally, then apply timezone
+      if (!d || !d.isValid()) {
+        try {
+          const natural = dayjs(src);
+          if (natural.isValid()) {
+            d = natural.tz(rowTz);
+            if (d.isValid()) {
+              console.log(`✅ Strategy 5 success: "${src}" -> "${d.toISOString()}"`);
+            }
+          }
+        } catch (e) {
+          // Last resort failed
+        }
+      }
+      
+      if (d && d.isValid()) {
+        try {
+          const t = d.tz(TARGET_TZ);
+          out.__yyyy = String(t.year());
+          out.__mm   = String(t.month() + 1).padStart(2, "0");
+          out["Order Date/Time"] = src;               // keep original
+          out.order_datetime_normalized = t.toISOString(); // normalized
+        } catch (e) {
+          console.log(`❌ Error converting timezone:`, e.message);
+        }
+      } else {
+        console.log(`❌ ALL STRATEGIES FAILED for: "${src}"`);
+        // Don't include date fields if parsing failed, but don't crash
+      }
+    }
+    
+    return out;
+    
+  } catch (error) {
+    console.error(`❌ Error normalizing row:`, error.message, row);
+    // Return a minimal valid row even if normalization fails
+    return {
+      "Product Name": row["Product Name"] ?? null,
+      "Color": row["Color"] ?? null,
+      "Size": row["Size"] ?? null,
+      "Product Net": 0,
+    };
+  }
+}
+
+====================================================================================
+🗄️ LAYER 3: REPOSITORY PATTERN (DATA ACCESS)
+====================================================================================
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/features/analytics/repositories/OrdersRepository.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Data access layer for order information with CSV parsing and error handling
+CONNECTS TO: All core infrastructure, AnalyticsService (used by)
+INPUT: Month ranges { startYYYYMM, endYYYYMM }
+OUTPUT: { rows: Array, present: Array, missing: Array }
+FEATURES: Parallel loading, Papa Parse integration, comprehensive error tracking
+═══════════════════════════════════════════════════════════════════════════════════
+
+import Papa from "papaparse";
+import { HttpStaticProvider } from "../../../core/io/HttpStaticProvider";
+import { ManifestClient } from "../../../core/paths/ManifestClient";
+import { PathResolver } from "../../../core/paths/PathResolver";
+import { DATA_SOURCES } from "../../../core/config/dataSources";
+import { normalizeOrdersRow } from "../../../core/utils/ordersNormalizer";
+
+const provider = new HttpStaticProvider();
+const manifest = new ManifestClient(provider, DATA_SOURCES.ordersInStore.manifestUrl);
+const resolver = new PathResolver(DATA_SOURCES.ordersInStore);
+
+async function parseCSV(text) {
+  return new Promise((resolve, reject) => {
+    Papa.parse(text, {
+      header: true,
+      skipEmptyLines: true,
+      dynamicTyping: true,
+      complete: (r) => resolve(r.data),
+      error: reject,
+    });
+  });
+}
+
+async function loadMonth(yyyy, mm) {
+  const urls = resolver.candidates(yyyy, mm);
+  console.log(`🔍 Trying to load ${yyyy}-${mm}, candidate URLs:`, urls); // DEBUG LINE
+  
+  let lastErr;
+  for (const url of urls) {
+    try {
+      console.log(`📁 Attempting to fetch: ${url}`); // DEBUG LINE
+      const text = await provider.getText(url);
+      const raw = await parseCSV(text);
+      const rows = raw.map((r) =>
+        normalizeOrdersRow(r, { sourceTz: "America/New_York", normalizeTo: "America/Los_Angeles" })
+      );
+      console.log(`✅ Successfully loaded ${yyyy}-${mm} from ${url}, got ${rows.length} rows`); // DEBUG LINE
+      return { yyyy, mm, url, rows };
+    } catch (e) {
+      console.log(`❌ Failed to fetch ${url}:`, e.message); // DEBUG LINE
+      lastErr = e;
+    }
+  }
+  return { yyyy, mm, url: null, rows: null, error: lastErr };
+}
+
+export const OrdersRepository = {
+  async findByMonthRange({ startYYYYMM, endYYYYMM }) {
+    const months = await manifest.listMonths();
+    console.log(`📊 Available months from manifest:`, months); // DEBUG LINE
+    
+    const inRange = months.filter(({ yyyy, mm }) => {
+      const k = `${yyyy}-${mm}`;
+      return k >= startYYYYMM && k <= endYYYYMM;
+    });
+    console.log(`📅 Months in range ${startYYYYMM} to ${endYYYYMM}:`, inRange); // DEBUG LINE
+
+    const results = await Promise.all(inRange.map((m) => loadMonth(m.yyyy, m.mm)));
+    const present = results.filter((r) => Array.isArray(r.rows));
+    const missing = results.filter((r) => !Array.isArray(r.rows));
+    
+    console.log(`📈 Results - Present: ${present.length}, Missing: ${missing.length}`); // DEBUG LINE
+    console.log(`📋 Missing details:`, missing); // DEBUG LINE
+    
+    const rows = present.flatMap((r) => r.rows.map((x) => ({ ...x, __yyyy: r.yyyy, __mm: r.mm })));
+
+    return { rows, present, missing };
+  },
+};
+
+====================================================================================
+⚙️ LAYER 4: BUSINESS LOGIC SERVICE
+====================================================================================
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/features/analytics/services/AnalyticsService.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Business logic orchestration layer that combines repository and adapters
+CONNECTS TO: OrdersRepository (uses), Adapters (uses), useAnalyticsQuery (used by)
+INPUT: Normalized query objects with time/product/metric filters
+OUTPUT: Processed data rows with scoping applied
+FLOW: Repository → Time Adapter → Product Adapter → Metric Adapter
+═══════════════════════════════════════════════════════════════════════════════════
+
+// src/features/analytics/services/AnalyticsService.js
+// Business logic layer: orchestrates repository + adapters.
+
+import { OrdersRepository } from "../repositories/OrdersRepository.js";
+import { applyTime } from "../adapters/time/timeAdapter.js";
+import { applyProduct } from "../adapters/productAdapter.js";
+import { applyMetric } from "../adapters/metricAdapter.js";
+
+export const AnalyticsService = {
+  async getOrdersForQuery(query) {
+    const { rows, present, missing } = await OrdersRepository.findByMonthRange(query.time);
+
+    let scoped = applyTime(rows, query.time);
+    scoped = applyProduct(scoped, query.product);
+    scoped = applyMetric(scoped, query.metric);
+
+    return { rows: scoped, present, missing };
+  },
+};
+
+====================================================================================
+🔧 LAYER 5: DATA ADAPTERS (FILTERING & TRANSFORMATION)
+====================================================================================
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/features/analytics/adapters/time/timeAdapter.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Apply precise time-based filtering beyond month-level repository loading
+CONNECTS TO: AnalyticsService (used by), Day.js (uses)
+INPUT: Normalized rows with order_datetime_normalized field
+OUTPUT: Filtered rows within exact date range
+GRANULARITY: Day-level filtering (repository handles month-level)
+═══════════════════════════════════════════════════════════════════════════════════
+
+// src/features/analytics/adapters/timeAdapter.js
+import dayjs from 'dayjs';
+
+/**
+ * Apply time-based filtering and transformations to data rows
+ * Repository handles month-level loading, this handles precise filtering
+ */
+export function applyTime(rows, timeConfig) {
+  console.log('🕐 timeAdapter called with:', { rowCount: rows?.length, timeConfig });
+  
+  if (!timeConfig || !rows?.length) {
+    console.log('🕐 timeAdapter: No config or no rows, returning original data');
+    return rows;
+  }
+
+  // Apply date range filtering
+  const filtered = applyDateRange(rows, timeConfig);
+  console.log('🕐 timeAdapter: Filtered from', rows.length, 'to', filtered.length, 'rows');
+  
+  return filtered;
+}
+
+function applyDateRange(rows, timeConfig) {
+  console.log('🕐 applyDateRange called with:', { rowCount: rows?.length, timeConfig });
+  
+  const { startDate, endDate } = timeConfig;
+  
+  if (!startDate || !endDate) {
+    console.log('🕐 applyDateRange: No startDate or endDate, returning all rows');
+    return rows;
+  }
+
+  console.log('🕐 applyDateRange: Filtering from', startDate, 'to', endDate);
+  
+  const filtered = rows.filter(row => {
+    const orderDate = dayjs(row.order_datetime_normalized);
+    if (!orderDate.isValid()) {
+      console.log('🕐 Invalid date for row:', row.order_datetime_normalized);
+      return true; // Keep rows with invalid dates for now
+    }
+    
+    if (startDate && orderDate.isBefore(dayjs(startDate), 'day')) return false;
+    if (endDate && orderDate.isAfter(dayjs(endDate), 'day')) return false;
+    
+    return true;
+  });
+
+  console.log('🕐 applyDateRange: Filtered', rows.length, 'rows down to', filtered.length, 'rows');
+  console.log('🕐 Sample filtered dates:', filtered.slice(0, 3).map(r => r.order_datetime_normalized));
+  
+  return filtered;
+}
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/features/analytics/adapters/productAdapter.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Filter rows based on product criteria (name, color, size)
+CONNECTS TO: AnalyticsService (used by)
+INPUT: Rows with Product Name, Color, Size fields
+OUTPUT: Filtered rows matching product criteria
+CONFIG: { ids: [], colors: [], sizes: [] }
+═══════════════════════════════════════════════════════════════════════════════════
+
+// src/features/analytics/adapters/productAdapter.js
+export function applyProduct(rows, product) {
+  if (!product) return rows;
+  // Example: { ids: [], colors: [], sizes: [] }
+  return rows.filter(r =>
+    (!product.ids    || product.ids.includes(r["Product Name"])) &&
+    (!product.colors || product.colors.includes(r.Color)) &&
+    (!product.sizes  || product.sizes.includes(r.Size))
+  );
+}
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/features/analytics/adapters/metricAdapter.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Apply metric calculations and aggregations (currently a stub)
+CONNECTS TO: AnalyticsService (used by)
+INPUT: Filtered rows
+OUTPUT: Rows with computed metric fields (future enhancement)
+STATUS: Placeholder for future metric computations
+═══════════════════════════════════════════════════════════════════════════════════
+
+// src/features/analytics/adapters/metricAdapter.js
+export function applyMetric(rows, metric) {
+  if (!metric) return rows;
+  // Example stub: attach computed fields later
+  return rows;
+}
+
+====================================================================================
+📦 LAYER 6: DATA TRANSFER OBJECTS (DTOs)
+====================================================================================
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/features/analytics/dtos/QueryDTO.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Query parameter normalization and validation
+CONNECTS TO: useAnalyticsQuery (used by), UI components (configured by)
+INPUT: Raw query objects from UI
+OUTPUT: Normalized query with standardized date formats
+FEATURES: Date format standardization (YYYY-MM, YYYY-MM-DD), default values
+═══════════════════════════════════════════════════════════════════════════════════
+
+export const defaultQuery = { time: null };
+
+const toYM = (v) => {
+  if (!v) return null;
+  if (typeof v === "string") return v.slice(0, 7);
+  if (v instanceof Date && !isNaN(v)) return v.toISOString().slice(0, 7);
+  return String(v).slice(0, 7);
+};
+
+const toYMD = (v) => {
+  if (!v) return null;
+  if (typeof v === "string") return v.slice(0, 10); // YYYY-MM-DD
+  if (v instanceof Date && !isNaN(v)) return v.toISOString().slice(0, 10);
+  return String(v).slice(0, 10);
+};
+
+export function normalizeQuery(partial) {
+  if (!partial) return defaultQuery;
+  const out = { ...defaultQuery };
+
+  if (partial.time) {
+    const t = partial.time;
+    
+    // Get month info for data loading
+    const start = toYM(t.startYYYYMM ?? t.start);
+    const end   = toYM(t.endYYYYMM   ?? t.end);
+    
+    // Get full date info for timeAdapter filtering
+    const startDate = toYMD(t.startDate);
+    const endDate = toYMD(t.endDate);
+    
+    if (start && end) {
+      out.time = { 
+        // Month info for data loading
+        startYYYYMM: start, 
+        endYYYYMM: end,
+        // Full date info for timeAdapter filtering
+        startDate: startDate,
+        endDate: endDate
+      };
+    } else {
+      out.time = null;
+    }
+  }
+  return out;
+}
+
+export function mergeQueries(prev, applied) {
+  const base = normalizeQuery(prev);
+  const inc  = normalizeQuery(applied);
+  return { ...base, ...(inc.time ? { time: inc.time } : {}) };
+}
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/features/analytics/dtos/TableDTO.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Standard table structure for UI components
+CONNECTS TO: tableFeeder (used by), Table component (consumed by)
+OUTPUT: { columnKeys, rows, totals, rowCount, columnCount, meta }
+FEATURES: Empty state handling
+═══════════════════════════════════════════════════════════════════════════════════
+
+// src/features/analytics/dtos/TableDTO.js
+export function makeEmptyTable() {
+  return {
+    columnKeys: ["Product Name"],
+    rows: [],
+    totals: {},
+    rowCount: 0,
+    columnCount: 1,
+    meta: {},
+  };
+}
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/features/analytics/dtos/ChartDTO.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Standard chart structure for visualization components
+CONNECTS TO: chartFeeder (used by), Chart component (consumed by)
+OUTPUT: { series, categories, meta }
+FEATURES: Empty state handling
+═══════════════════════════════════════════════════════════════════════════════════
+
+// src/features/analytics/dtos/ChartDTO.js
+export function makeEmptyChart() {
+  return { series: [], categories: [], meta: {} };
+}
+
+====================================================================================
+🏭 LAYER 7: DATA FEEDERS (TRANSFORMATION TO UI FORMATS)
+====================================================================================
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/features/analytics/feeders/tableFeeder.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Transform raw data rows into table-ready format with totals
+CONNECTS TO: useAnalyticsQuery (used by), TableDTO (uses), Table component (feeds)
+INPUT: Raw normalized rows from AnalyticsService
+OUTPUT: TableDTO with formatted rows, column keys, and calculated totals
+FEATURES: Column selection, totals calculation, row indexing
+═══════════════════════════════════════════════════════════════════════════════════
+
+// src/features/analytics/feeders/tableFeeder.js
+import { makeEmptyTable } from "../dtos/TableDTO.js";
+
+export function toTable(rows, opts = {}) {
+  if (!rows?.length) return makeEmptyTable();
+
+  const columnKeys = ["Product Name", "Color", "Size", "Product Net", "Order Date/Time"];
+  const tableRows = rows.map((r, i) => ({
+    "#": i + 1,
+    "Product Name": r["Product Name"],
+    "Color": r.Color,
+    "Size": r.Size,
+    "Product Net": r["Product Net"],
+    "Order Date/Time" : r["Order Date/Time"]
+  }));
+
+  const totals = {
+    "Product Net": tableRows.reduce((a, x) => a + (x["Product Net"] ?? 0), 0),
+  };
+
+  return {
+    columnKeys,
+    rows: tableRows,
+    totals,
+    rowCount: tableRows.length,
+    columnCount: columnKeys.length,
+    meta: opts.meta ?? {},
+  };
+}
+
+// Export with both names for flexibility
+export const toTableDTO = toTable;
+export default toTable;
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/features/analytics/feeders/chartFeeder.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Transform raw data into chart-ready time series format
+CONNECTS TO: Chart components (feeds), ChartDTO (uses)
+INPUT: Raw normalized rows with __yyyy, __mm metadata
+OUTPUT: ChartDTO with time-based series data
+AGGREGATION: Monthly totals by specified metric (default: Product Net)
+═══════════════════════════════════════════════════════════════════════════════════
+
+// src/features/analytics/feeders/chartFeeder.js
+import { makeEmptyChart } from "../dtos/ChartDTO.js";
+
+export function toChart(rows, { xKey = "__mm", yKey = "Product Net" } = {}) {
+  if (!rows?.length) return makeEmptyChart();
+
+  const byMonth = new Map();
+  for (const r of rows) {
+    const k = `${r.__yyyy}-${r.__mm}`;
+    byMonth.set(k, (byMonth.get(k) ?? 0) + (Number(r[yKey]) || 0));
+  }
+
+  const categories = Array.from(byMonth.keys()).sort();
+  const series = [{ name: yKey, data: categories.map(c => byMonth.get(c)) }];
+
+  return { categories, series, meta: { xKey, yKey } };
+}
+
+====================================================================================
+⚛️ LAYER 8: REACT INTEGRATION
+====================================================================================
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/features/analytics/hooks/useAnalyticsQuery.js
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: React hook that orchestrates the entire data pipeline
+CONNECTS TO: All layers (orchestrates), Analytics component (used by)
+INPUT: Query objects from UI state
+OUTPUT: { table, loading, error, meta } state
+LIFECYCLE: Query normalization → Service call → Data transformation → State update
+═══════════════════════════════════════════════════════════════════════════════════
+
+import { useEffect, useState } from "react";
+import { AnalyticsService } from "../services/AnalyticsService";
+import { normalizeQuery } from "../dtos/QueryDTO";
+import { toTableDTO } from "../feeders/tableFeeder";
+
+export function useAnalyticsQuery(inputQuery) {
+  const [state, setState] = useState({ table: null, loading: false, error: null, meta: null });
+
+  useEffect(() => {
+    const q = normalizeQuery(inputQuery);
+    if (!q.time) {
+      setState({ table: null, loading: false, error: null, meta: null });
+      return;
+    }
+
+    let cancelled = false;
+    setState({ table: null, loading: true, error: null, meta: null });
+
+    AnalyticsService.getOrdersForQuery(q)
+      .then((res) => {
+        if (cancelled) return;
+        const table = toTableDTO(res.rows);
+        setState({ table, loading: false, error: null, meta: { missing: res.missing } });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setState({ table: null, loading: false, error: err, meta: null });
+      });
+
+    return () => { cancelled = true; };
+  }, [JSON.stringify(inputQuery)]);
+
+  return state;
+}
+
+====================================================================================
+🎨 LAYER 9: UI COMPONENTS
+====================================================================================
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/features/analytics/components/StatusDisplay.jsx
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Display query status, loading state, errors, and missing data info
+CONNECTS TO: Analytics page (used by), useAnalyticsQuery hook (displays state from)
+INPUT: { query, loading, error, meta } from hook
+OUTPUT: Formatted status line with range, loading, errors, missing months
+FEATURES: Safe formatting of complex objects, missing month display
+═══════════════════════════════════════════════════════════════════════════════════
+
+// src/features/analytics/components/StatusDisplay.jsx
+
+import React from 'react';
+
+export function StatusDisplay({ query, loading, error, meta }) {
+  // Helper function to safely format missing months
+  const formatMissingMonths = (missing) => {
+    if (!missing || !Array.isArray(missing)) return "";
+    
+    return missing.map(m => {
+      // Handle both object and primitive formats
+      if (typeof m === 'object' && m !== null) {
+        // Convert any Date objects or complex objects to strings
+        const yyyy = String(m.yyyy || '');
+        const mm = String(m.mm || '').padStart(2, '0');
+        return `${yyyy}-${mm}`;
+      }
+      return String(m); // Fallback for primitive values
+    }).join(", ");
+  };
+
+  return (
+    <div className="text-xs text-gray-500 mb-2">
+      {query?.time
+        ? <>Range: {String(query.time.startYYYYMM)} → {String(query.time.endYYYYMM)}</>
+        : "No range selected"}
+      {loading ? " • loading…" : ""}
+      {error ? ` • error: ${String(error.message || error)}` : ""}
+      {!loading && meta?.missing?.length
+        ? ` • missing: ${formatMissingMonths(meta.missing)}`
+        : ""}
+    </div>
+  );
+}
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/features/analytics/components/tables/Table.jsx
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Advanced table component with synchronized scrolling and placeholder support
+CONNECTS TO: Analytics page (used by), tableFeeder (consumes data from)
+INPUT: TableDTO with rows, columns, totals, and display options
+OUTPUT: Sophisticated table UI with fixed headers, synchronized scrolling
+FEATURES: Horizontal/vertical scroll sync, placeholder rows, sorting UI, responsive layout
+ARCHITECTURE: Split layout with fixed name column and scrollable metrics grid
+═══════════════════════════════════════════════════════════════════════════════════
+
+[TABLE COMPONENT SOURCE CODE - 288 lines]
+// See the full implementation above - this complex component handles:
+// - Split-pane layout (fixed left column + scrollable right grid)
+// - Synchronized horizontal scrolling between header and footer
+// - Placeholder rows/columns for empty states
+// - Sorting UI with directional indicators  
+// - Value formatting for currency, percentages, and numbers
+// - Responsive design with proper scroll behavior
+// - Advanced CSS transforms for scroll synchronization
+
+====================================================================================
+📱 LAYER 10: PAGE INTEGRATION
+====================================================================================
+
+═══════════════════════════════════════════════════════════════════════════════════
+📁 src/pages/Analytics.jsx
+───────────────────────────────────────────────────────────────────────────────────
+PURPOSE: Main analytics page that brings together all pipeline components
+CONNECTS TO: App.jsx (used by), all analytics components (uses)
+FEATURES: Query state management, UI panel system, data visualization
+FLOW: User interaction → Query updates → Hook triggers → Data flows → UI updates
+═══════════════════════════════════════════════════════════════════════════════════
+
+[ANALYTICS PAGE SOURCE CODE - 151 lines]
+// Complete implementation showing:
+// - useAnalyticsQuery hook integration
+// - Query state management with time filtering
+// - Panel-based filter UI system
+// - Status display integration
+// - Table and chart component integration
+// - Error handling and loading states
+
+====================================================================================
+🚀 COMPLETE DATA FLOW EXAMPLE
+====================================================================================
+
+When a user selects a date range in the Analytics UI:
+
+1. USER INTERACTION: Clicks time panel, selects "2025-01 to 2025-03"
+   
+2. QUERY NORMALIZATION: QueryDTO.normalizeQuery() converts to:
+   { time: { startYYYYMM: "2025-01", endYYYYMM: "2025-03", startDate: "2025-01-01", endDate: "2025-03-31" } }
+
+3. HOOK TRIGGERS: useAnalyticsQuery detects change, calls AnalyticsService
+
+4. SERVICE ORCHESTRATION: AnalyticsService.getOrdersForQuery() starts pipeline
+
+5. DATA DISCOVERY: ManifestClient queries /data/newstore/orders/index.json for available months
+
+6. REPOSITORY LOADING: OrdersRepository filters months in range, loads CSV files:
+   - /data/newstore/orders/2025/2025-01/2025-01_orders_in_store.csv
+   - /data/newstore/orders/2025/2025-02/2025-02_orders_in_store.csv  
+   - /data/newstore/orders/2025/2025-03/2025-03_orders_in_store.csv
+
+7. CSV PROCESSING: Papa Parse converts CSV to objects, ordersNormalizer handles:
+   - Timezone conversion (Eastern → Pacific)
+   - Date parsing with 5 fallback strategies
+   - Financial data cleaning ($1,234.56 → 1234.56)
+
+8. ADAPTER FILTERING: 
+   - timeAdapter: Filters to exact date range (not just months)
+   - productAdapter: Applies product filters (if any)
+   - metricAdapter: Adds computed fields (future)
+
+9. DATA TRANSFORMATION: tableFeeder converts to TableDTO:
+   - Selects display columns
+   - Calculates totals
+   - Adds row numbering
+
+10. UI UPDATE: Hook returns { table, loading: false, error: null, meta: { missing: [] } }
+
+11. RENDERING: Table component displays data with synchronized scrolling
+
+12. STATUS DISPLAY: Shows "Range: 2025-01 → 2025-03" with any missing months
+
+This entire pipeline executes asynchronously with proper error handling, 
+loading states, and performance optimizations throughout each layer.
+
+====================================================================================
+🔧 DEVELOPMENT INTEGRATION POINTS
+====================================================================================
+
+To add a new data source or extend the pipeline:
+
+1. **Add Data Source**: Update src/core/config/dataSources.js
+2. **Create Repository**: Follow OrdersRepository pattern
+3. **Add Normalizer**: Create transformation logic like ordersNormalizer
+4. **Create Service**: Add business logic in services/
+5. **Build Adapters**: Add filtering logic in adapters/
+6. **Create Feeders**: Transform to UI format in feeders/
+7. **Add Hook**: Create React integration hook
+8. **Build Components**: Create UI components for display
+
+The modular architecture makes it easy to extend any layer independently while 
+maintaining the overall data flow contract between components.
+
+====================================================================================

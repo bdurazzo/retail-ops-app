@@ -10,7 +10,13 @@ export const DRAG_TYPES = {
   VIEW_MODE: 'view-mode',
   FILTER: 'filter',        // Future: drag filters
   COLUMN: 'column',        // Future: reorder columns
-  ROW: 'row'               // Future: reorder rows
+  ROW: 'row',              // Future: reorder rows
+
+  // Assignment types (module/table)
+  COLUMN_ASSIGNMENT: 'column-assignment',
+  ROW_ASSIGNMENT: 'row-assignment',
+  LABEL_ASSIGNMENT: 'label-assignment',
+  BUTTON_ASSIGNMENT: 'button-assignment'
 };
 
 /**
@@ -48,6 +54,42 @@ export const dragDataSchemas = {
     type: DRAG_TYPES.ROW,
     rowId: '',
     rowIndex: -1
+  },
+
+  // Assignment schemas
+  [DRAG_TYPES.COLUMN_ASSIGNMENT]: {
+    type: DRAG_TYPES.COLUMN_ASSIGNMENT,
+    id: '',
+    columnKey: '',
+    label: null,
+    width: null,
+    alignment: null,
+    nestedAssignments: []
+  },
+
+  [DRAG_TYPES.ROW_ASSIGNMENT]: {
+    type: DRAG_TYPES.ROW_ASSIGNMENT,
+    id: '',
+    dataSource: null,
+    filter: null,
+    plugin: null,
+    nestedAssignments: []
+  },
+
+  [DRAG_TYPES.LABEL_ASSIGNMENT]: {
+    type: DRAG_TYPES.LABEL_ASSIGNMENT,
+    id: '',
+    label: '',
+    sourceField: null
+  },
+
+  [DRAG_TYPES.BUTTON_ASSIGNMENT]: {
+    type: DRAG_TYPES.BUTTON_ASSIGNMENT,
+    id: '',
+    label: '',
+    action: '',
+    params: {},
+    nestedAssignments: []
   }
 };
 
