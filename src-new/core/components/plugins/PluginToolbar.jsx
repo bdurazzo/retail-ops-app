@@ -8,7 +8,7 @@ import TrendPluginPanel from './panels/TrendPluginPanel.jsx';
 import TablePluginPanel from './panels/TablePluginPanel.jsx';
 import RowPluginPanel from './panels/RowPluginPanel.jsx';
 import ColumnPluginPanel from './panels/ColumnPluginPanel.jsx';
-import CellPluginPanel from './panels/CellPlugin.jsx';
+import CellPluginPanel from './panels/CellPluginPanel.jsx';
 import {
   IconShirtFilled,
   IconBriefcaseFilled,

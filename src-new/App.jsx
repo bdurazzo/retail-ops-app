@@ -14,7 +14,7 @@ import {
   IconDeviceDesktopAnalytics, // ADD THIS FOR TEST TAB
 } from '@tabler/icons-react';
 import PluginToolbar from './core/components/plugins/PluginToolbar';
-import TableToolbar from './core/components/module/table/container/TableToolbar';
+import TableToolbar from './core/components/module/table/container/TableController';
 
 export default function App() {
   // Start on a tab that actually exists in the bottom bar

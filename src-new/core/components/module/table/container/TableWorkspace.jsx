@@ -8,7 +8,7 @@
 
 import React from 'react';
 import TableContainer, { TableHeader as TableHeaderSlot, TableBody as TableBodySlot, TableFooter as TableFooterSlot } from '../../../custom/table/TableContainer.jsx';
-import TableToolbar from './TableToolbar.jsx';
+import TableController from './TableController.jsx';
 import TableHeader from './TableHeader.jsx';
 import TableBody from './TableBody.jsx';
 import TableFooter from './TableFooter.jsx';
@@ -40,7 +40,7 @@ export default function TableWorkspace({
   return (
     <div className="flex flex-col h-full rounded-xl min-w-0">
       {/* Toolbar with button assignments */}
-      <TableToolbar
+      <TableController
         buttonAssignments={buttonAssignments}
       />
 

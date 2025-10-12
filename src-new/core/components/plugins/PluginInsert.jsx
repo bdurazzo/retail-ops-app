@@ -1,280 +1,207 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { IconDownload, IconCheck, IconX, IconLoader, IconFilter } from '@tabler/icons-react';
+/**
+ * PluginInsert
+ *
+ * Slot receiver UI for filter plugins.
+ * Uses ControlPanel + Toolbar structure matching PluginToolbar.
+ * Displays drop zones for Product, Metric, Time, Element, and Trend plugins.
+ * Users drag plugin buttons from PluginToolbar and drop into slots.
+ */
+
+import React from 'react';
+import ControlPanel from '../../../components/ControlPanel.jsx';
+import {
+  IconShirtFilled,
+  IconBriefcaseFilled,
+  IconClockFilled,
+  IconTemperaturePlusFilled,
+  IconChartDots2Filled,
+  IconX
+} from '@tabler/icons-react';
+
+// Slot configuration
+const SLOTS = [
+  {
+    id: 'product',
+    label: 'Product',
+    icon: IconShirtFilled,
+    required: true,
+    description: 'What to analyze'
+  },
+  {
+    id: 'metric',
+    label: 'Metric',
+    icon: IconBriefcaseFilled,
+    required: true,
+    description: 'How to measure'
+  },
+  {
+    id: 'time',
+    label: 'Time',
+    icon: IconClockFilled,
+    required: true,
+    description: 'When/How to segment'
+  },
+];
 
 /**
- * PluginInsert - Data input plugin component
- * 
- * Handles receiving data from other components and inserting it into the current context
- * Provides UI for selecting data sources and transformation options
+ * Individual Slot Component
  */
-export default function PluginInsert({
-  targetContext = {}, // Context where data will be inserted
-  acceptedDataTypes = [], // Which data types this component can accept
-  onDataReceived = null, // Callback when data is successfully received
-  onError = null, // Callback for error handling
-  containerStyle = "bg-green-50 border border-green-200 rounded",
-  containerPadding = "p-2",
-  isActive = false, // Whether this plugin is currently active/connected
-  size = "sm", // sm, md, lg
-  availableData = [] // Available data packages that can be inserted
+function PluginSlot({
+  slot,
+  pluginData,
+  onDrop,
+  onClear,
+  isValid
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [selectedData, setSelectedData] = useState(null);
-  const [insertStatus, setInsertStatus] = useState('idle'); // idle, inserting, success, error
-  const [errorMessage, setErrorMessage] = useState('');
-  const [filteredData, setFilteredData] = useState([]);
-  const componentRef = useRef(null);
+  const Icon = slot.icon;
+  const isEmpty = !pluginData;
+  const isRequired = slot.required;
+  const [isDragging, setIsDragging] = React.useState(false);
 
-  // Filter available data by accepted types
-  useEffect(() => {
-    const filtered = availableData.filter(data => 
-      acceptedDataTypes.length === 0 || acceptedDataTypes.includes(data.type)
-    );
-    setFilteredData(filtered);
-  }, [availableData, acceptedDataTypes]);
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
-  // Auto-collapse when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (componentRef.current && !componentRef.current.contains(event.target)) {
-        setIsExpanded(false);
-      }
-    }
-
-    if (isExpanded) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [isExpanded]);
-
-  // Reset status after success/error
-  useEffect(() => {
-    if (insertStatus === 'success' || insertStatus === 'error') {
-      const timer = setTimeout(() => {
-        setInsertStatus('idle');
-        setErrorMessage('');
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [insertStatus]);
-
-  const handleInsert = async () => {
-    if (!selectedData) return;
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
     try {
-      setInsertStatus('inserting');
-      
-      // Process the data for insertion
-      const processedData = {
-        ...selectedData,
-        insertedAt: new Date().toISOString(),
-        targetContext: targetContext,
-        insertId: `insert_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
-      };
+      const data = e.dataTransfer.getData('text/plain');
+      const pluginData = JSON.parse(data);
 
-      // Simulate insertion processing
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      if (onDataReceived) {
-        onDataReceived(processedData);
+      // Validate plugin type matches slot
+      if (pluginData.type === slot.id) {
+        onDrop(slot.id, pluginData);
+      } else {
+        console.warn(`Plugin type "${pluginData.type}" doesn't match slot "${slot.id}"`);
       }
-      
-      setInsertStatus('success');
-      setIsExpanded(false);
-    } catch (error) {
-      setInsertStatus('error');
-      setErrorMessage(error.message || 'Failed to insert data');
-      if (onError) {
-        onError(error);
-      }
+    } catch (err) {
+      console.error('Failed to parse dropped plugin data:', err);
     }
   };
 
-  const getSizeClasses = () => {
-    switch (size) {
-      case 'lg': return { button: 'w-8 h-8', icon: 18, panel: 'w-64' };
-      case 'md': return { button: 'w-6 h-6', icon: 16, panel: 'w-56' };
-      case 'sm': 
-      default: return { button: 'w-5 h-5', icon: 14, panel: 'w-48' };
-    }
+  const handleDragStart = (e) => {
+    e.stopPropagation();
+
+    // Serialize slot data for preview toolbars
+    const slotData = {
+      slotType: slot.id,
+      label: slot.label,
+      icon: slot.icon.name || slot.id,
+      required: slot.required,
+      description: slot.description
+    };
+
+    e.dataTransfer.setData('text/plain', JSON.stringify(slotData));
+    e.dataTransfer.effectAllowed = 'copy';
+    setIsDragging(true);
   };
 
-  const sizeClasses = getSizeClasses();
-
-  const getStatusIcon = () => {
-    switch (insertStatus) {
-      case 'inserting':
-        return <IconLoader size={sizeClasses.icon} className="text-green-600 animate-spin" />;
-      case 'success':
-        return <IconCheck size={sizeClasses.icon} className="text-green-600" />;
-      case 'error':
-        return <IconX size={sizeClasses.icon} className="text-red-600" />;
-      default:
-        return <IconDownload size={sizeClasses.icon} className={isActive ? "text-green-600" : "text-gray-400"} />;
-    }
-  };
-
-  const getButtonStyle = () => {
-    if (insertStatus === 'success') return 'bg-green-50 border-green-300 hover:bg-green-100';
-    if (insertStatus === 'error') return 'bg-red-50 border-red-300 hover:bg-red-100';
-    if (isActive) return 'bg-green-50 border-green-300 hover:bg-green-100';
-    return 'bg-gray-50 border-gray-300 hover:bg-gray-100';
-  };
-
-  const formatDataPreview = (data) => {
-    if (data.source?.productName) {
-      return `${data.source.productName} (${data.type})`;
-    }
-    return `${data.type} data (${new Date(data.timestamp).toLocaleTimeString()})`;
+  const handleDragEnd = (e) => {
+    setIsDragging(false);
   };
 
   return (
-    <div ref={componentRef} className="relative">
-      {/* Insert Button */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className={`${sizeClasses.button} flex items-center justify-center rounded border transition-all ${getButtonStyle()}`}
-        title={isActive ? "Insert data" : "Insert plugin (not connected)"}
-        disabled={insertStatus === 'inserting'}
+    <div className="px-1 pl-2 flex-1 flex-row items-center justify-center">
+      {/* Slot Drop Zone - Same size as filter plugin buttons */}
+      <div
+        draggable={true}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        className={`
+          relative w-[50px] h-[35px] rounded border-2 transition-all flex flex-col items-center justify-center gap-1 cursor-grab active:cursor-grabbing
+          ${isEmpty
+            ? 'border-dashed border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
+            : isValid
+              ? 'border-solid border-green-400 bg-green-50'
+              : 'border-solid border-gray-400 bg-white'
+          }
+          ${isDragging ? 'opacity-50' : ''}
+        `}
       >
-        {getStatusIcon()}
-      </button>
-
-      {/* Expanded Panel */}
-      {isExpanded && (
-        <div className={`absolute top-full mt-1 left-0 ${sizeClasses.panel} ${containerStyle} ${containerPadding} shadow-lg z-50`}>
-          <div className="space-y-3">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium text-gray-900">Insert Data</h4>
-              <button
-                onClick={() => setIsExpanded(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <IconX size={14} />
-              </button>
-            </div>
-
-            {/* Accepted Types Info */}
-            {acceptedDataTypes.length > 0 && (
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Accepted Types
-                </label>
-                <div className="text-xs text-gray-600 bg-gray-50 rounded px-2 py-1">
-                  {acceptedDataTypes.map(type => 
-                    type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-                  ).join(', ')}
-                </div>
+        {/* Empty State */}
+        {isEmpty && (
+          <>
+            <Icon size={20} stroke={1.5} className="text-gray-400" />
+            {isRequired && (
+              <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-500 text-white text-[8px] flex items-center justify-center font-bold">
+                !
               </div>
             )}
+          </>
+        )}
 
-            {/* Available Data Selection */}
-            {filteredData.length > 0 ? (
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Available Data ({filteredData.length})
-                </label>
-                <select
-                  value={selectedData?.id || ''}
-                  onChange={(e) => {
-                    const selected = filteredData.find(d => d.id === e.target.value);
-                    setSelectedData(selected);
-                  }}
-                  className="w-full text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-green-500 focus:border-green-500"
-                >
-                  <option value="">Select data source...</option>
-                  {filteredData.map(data => (
-                    <option key={data.id} value={data.id}>
-                      {formatDataPreview(data)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : (
-              <div className="text-xs text-gray-500 bg-gray-50 rounded px-2 py-1 flex items-center gap-1">
-                <IconFilter size={12} />
-                No compatible data available
-              </div>
-            )}
-
-            {/* Target Context Info */}
-            {targetContext.productName && (
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Target
-                </label>
-                <div className="text-xs text-gray-600 bg-gray-50 rounded px-2 py-1">
-                  {targetContext.productName}
-                </div>
-              </div>
-            )}
-
-            {/* Error Message */}
-            {insertStatus === 'error' && errorMessage && (
-              <div className="text-xs text-red-600 bg-red-50 rounded px-2 py-1">
-                {errorMessage}
-              </div>
-            )}
-
-            {/* Insert Button */}
+        {/* Filled State */}
+        {!isEmpty && pluginData && (
+          <>
+            <Icon size={20} stroke={1.75} className="text-gray-700" />
+            <span className="text-[10px] font-medium text-gray-900 truncate w-full text-center px-1">
+              {pluginData.label}
+            </span>
+            {/* Clear Button */}
             <button
-              onClick={handleInsert}
-              disabled={!selectedData || insertStatus === 'inserting'}
-              className={`w-full text-xs py-1 px-2 rounded transition-colors ${
-                !selectedData || insertStatus === 'inserting'
-                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-green-600 text-white hover:bg-green-700'
-              }`}
+              onClick={() => onClear(slot.id)}
+              className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
             >
-              {insertStatus === 'inserting' ? 'Inserting...' : 'Insert Data'}
+              <IconX size={8} className="text-gray-600" />
             </button>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </div>
+
+      {/* Slot Label */}
+      <div className="text-[10px] text-gray-600">{slot.label}</div>
     </div>
   );
 }
 
 /**
- * Hook for managing PluginInsert state
+ * Main PluginInsert Component
  */
-export function usePluginInsert(initialContext = {}, initialAcceptedTypes = []) {
-  const [targetContext, setTargetContext] = useState(initialContext);
-  const [acceptedDataTypes, setAcceptedDataTypes] = useState(initialAcceptedTypes);
-  const [receivedData, setReceivedData] = useState([]);
-  const [availableData, setAvailableData] = useState([]);
+export default function PluginInsert({
+  slotData = {},
+  onSlotFill,
+  onSlotClear,
+  queryIsValid = false
+}) {
+  // Toolbar buttons (placeholder for future functionality)
+  const toolbarButtons = [];
 
-  const updateTargetContext = (context) => {
-    setTargetContext(prev => ({ ...prev, ...context }));
-  };
+  // Build center content - all 5 slots in a row
+  const centerControls = (
+    <div className="flex gap-1 items-center justify-center">
+      {SLOTS.map(slot => (
+        <PluginSlot
+          key={slot.id}
+          slot={slot}
+          pluginData={slotData[slot.id]}
+          onDrop={onSlotFill}
+          onClear={onSlotClear}
+          isValid={queryIsValid && slot.required}
+        />
+      ))}
+    </div>
+  );
 
-  const updateAcceptedTypes = (types) => {
-    setAcceptedDataTypes(types);
-  };
+  // No dropdown content for PluginInsert
+  const menuContents = {};
 
-  const updateAvailableData = (data) => {
-    setAvailableData(data);
-  };
-
-  const handleDataReceived = (dataPackage) => {
-    setReceivedData(prev => [...prev, dataPackage]);
-    console.log('=å PluginInsert: Data received:', dataPackage);
-  };
-
-  const handleError = (error) => {
-    console.error('=å PluginInsert: Insert error:', error);
-  };
-
-  return {
-    targetContext,
-    acceptedDataTypes,
-    receivedData,
-    availableData,
-    updateTargetContext,
-    updateAcceptedTypes,
-    updateAvailableData,
-    handleDataReceived,
-    handleError
-  };
+  return (
+    <div className="relative" data-ignore-outside="true">
+      {/* ControlPanel with slots in center */}
+      <ControlPanel
+        centerControls={centerControls}
+        leftButtons={toolbarButtons}
+        rightButtons={[]}
+        activeMenu={null}
+        menuContents={menuContents}
+        onMenuToggle={() => {}}
+        showCenterControls={true}
+      />
+    </div>
+  );
 }

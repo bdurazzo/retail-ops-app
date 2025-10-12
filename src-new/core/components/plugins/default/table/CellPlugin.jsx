@@ -1,5 +1,5 @@
 /**
- * RowPlugin - Minimal Shell
+ * CellPlugin - Minimal Shell
  *
  * Simple expand/collapse container matching TablePlugin aesthetic.
  * You can customize the toolbar content and expanded content.
@@ -9,8 +9,7 @@ import React, { useState } from 'react';
 import Toolbar from '../../../../../components/Toolbar.jsx';
 import { MODULE_STYLES, MODULE_LAYOUT } from '../../../custom/table/tableProps.js';
 import {
-  IconCrosshair,
-  IconOutlet,
+  IconCircleDot,
   IconShirtFilled,
   IconClockFilled,
   IconBriefcaseFilled,
@@ -27,13 +26,13 @@ const SLOT_ICONS = {
   trend: IconChartDots2Filled
 };
 
-export default function RowPlugin({
+export default function CellPlugin({
   row,
   cellState = {},
   onCellStateUpdate = () => {},
   expandedRows = {},
   toggleRowExpanded = () => {},
-  title = 'Row Plugin',
+  title = 'Cell Plugin',
   children,
   ...props
 }) {
@@ -43,7 +42,7 @@ export default function RowPlugin({
   const [isDragOver, setIsDragOver] = useState(false);
 
   const isActivated = !!assignedSlot;
-  const SlotIcon = assignedSlot ? SLOT_ICONS[assignedSlot.slotType] : IconCrosshair;
+  const SlotIcon = assignedSlot ? SLOT_ICONS[assignedSlot.slotType] : IconCircleDot;
 
   const handleDragStart = (e) => {
     if (!isActivated) {
@@ -52,8 +51,8 @@ export default function RowPlugin({
     }
 
     const pluginData = {
-      type: 'row',
-      id: 'row-plugin',
+      type: 'cell',
+      id: 'cell-plugin',
       slotType: assignedSlot.slotType,
       label: assignedSlot.label,
       title: title
@@ -85,7 +84,7 @@ export default function RowPlugin({
 
       if (slotData.slotType) {
         setAssignedSlot(slotData);
-        console.log('Row plugin activated with slot:', slotData);
+        console.log('Cell plugin activated with slot:', slotData);
       }
     } catch (err) {
       console.error('Failed to parse slot data:', err);
@@ -94,7 +93,7 @@ export default function RowPlugin({
 
   return (
     <div
-      className={`w-full h-full p-1 flex items-center ${isActivated ? 'cursor-grab active:cursor-grabbing' : ''}`}
+      className={`w-full h-full flex items-center ${isActivated ? 'cursor-grab active:cursor-grabbing' : ''}`}
       draggable={isActivated}
       onDragStart={handleDragStart}
     >
@@ -104,24 +103,24 @@ export default function RowPlugin({
         borderWidth={0}
         shadowSize=""
         paddingX={0}
-        backgroundColor={isActivated ? "bg-gradient-to-r from-gray-100 via-white to-transparent" : "bg-gradient-to-r from-gray-100/30 via-transparent to-transparent"}
+        backgroundColor={isActivated ? "bg-gradient-to-r from-gray-100 via-white to-transparent" : "bg-gradient-to-r from-gray-100/50 via-transparent to-transparent"}
         className={`w-full h-full pl-2 rounded-none ${isActivated ? 'hover:bg-gray-50' : ''}`}
         leftContent={
           <div
-            className={`transition-all ${isDragOver ? 'bg-blue-100' : ''}`}
+            className={`h-4 w-4 shadow rounded-full transition-all ${isDragOver ? 'bg-blue-200' : isActivated ? 'bg-gradient-to-br from-gray-200 via-gray-100 to-gray-300' : 'bg-gradient-to-br from-gray-100 via-gray-50 to-gray-200'}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
-            <div className={`flex justify-center items-center ${isActivated ? 'text-gray-700' : 'text-gray-400'}`}>
-              <SlotIcon size={24} stroke={isActivated ? 1.75 : 1.5} />
+            <div className={`flex justify-center items-center h-full ${isActivated ? 'text-gray-700' : 'text-gray-400'}`}>
+              <SlotIcon size={12} stroke={isActivated ? 2 : 1.5} />
             </div>
           </div>
         }
         centerContent={
           <div className="flex-1 flex h-full w-full items-center pl-6">
             <span className={`text-[11px] truncate font-medium ${isActivated ? 'text-gray-700' : 'text-gray-500'}`}>
-              {isActivated ? `${assignedSlot.label} Row` : title}
+              {isActivated ? `${assignedSlot.label} Cell` : title}
             </span>
           </div>
         }
