@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import TableContainer, { TableHeader as TableHeaderSlot, TableBody as TableBodySlot, TableFooter as TableFooterSlot } from '../../../custom/table/TableContainer.jsx';
+import TableContainer, { TableHeader as TableHeaderSlot, TableBody as TableBodySlot, TableFooter as TableFooterSlot, TableToolbar } from '../../../custom/table/TableContainer.jsx';
 import TableController from './TableController.jsx';
 import TableHeader from './TableHeader.jsx';
 import TableBody from './TableBody.jsx';
@@ -17,7 +17,6 @@ export default function TableWorkspace({
   // Assignments from user drag/drop
   columnAssignments = [],
   rowAssignments = [],
-  buttonAssignments = [],
 
   // Processed table props (eventually from tableOperator)
   tableProps = {
@@ -35,15 +34,18 @@ export default function TableWorkspace({
   // Data configuration
   dataConfig = {},
 
+  // Sorting
+  sortKey = null,
+  sortDirection = null,
+  onSort = () => {},
+
+  // Column swapping
+  onColumnSwap = () => {},
+
   ...props
 }) {
   return (
-    <div className="flex flex-col h-full rounded-xl min-w-0">
-      {/* Toolbar with button assignments */}
-      <TableController
-        buttonAssignments={buttonAssignments}
-      />
-
+    <div className="flex flex-col h-full w-full rounded-xl min-w-0">
       {/* Main table container */}
       <TableContainer
         rows={tableProps.rows}
@@ -52,9 +54,17 @@ export default function TableWorkspace({
         columnLabels={tableProps.columnLabels}
         columnWidths={tableProps.columnWidths}
         layout={tableProps.layout}
-        maxBodyHeight={300}
         styles={tableProps.styles}
+        sortKey={sortKey}
+        sortDirection={sortDirection}
+        onSort={onSort}
+        onColumnSwap={onColumnSwap}
       >
+        {/* Toolbar */}
+        <TableToolbar>
+          <TableController />
+        </TableToolbar>
+
         <TableHeaderSlot>
           <TableHeader
             columnAssignments={columnAssignments}
@@ -62,6 +72,8 @@ export default function TableWorkspace({
             columnWidths={tableProps.columnWidths}
             fixedColumns={tableProps.fixedColumns}
             scrollingColumns={tableProps.scrollingColumns}
+            allColumnKeys={tableProps.columnKeys}
+            onColumnSwap={onColumnSwap}
           />
         </TableHeaderSlot>
 

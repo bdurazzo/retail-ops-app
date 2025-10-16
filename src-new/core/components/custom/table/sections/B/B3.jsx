@@ -44,6 +44,10 @@ export default function B3Section({
   const gridTemplate = columnKeys.map(key => `${columnWidths[key] || metricColWidth || 80}px`).join(' ');
   const totalMetricWidth = columnKeys.reduce((sum, key) => sum + (columnWidths[key] || metricColWidth || 80), 0);
 
+  console.log('B3: columnKeys:', columnKeys);
+  console.log('B3: totalMetricWidth:', totalMetricWidth);
+  console.log('B3: gridTemplate:', gridTemplate);
+
   // Format value helper (same as B2)
   const formatVal = (key, val) => {
     if (val == null || val === "") return "";
@@ -75,7 +79,7 @@ export default function B3Section({
 
         const baseClasses = isPlaceholder
           ? (styles.placeholder || "flex-none shadow-gray-300 flex border-t border-r border-gray-100 items-center justify-center text-xs font-semibold text-gray-400 relative z-[60] bg-gradient-to-t from-gray-100 via-white to-gray-100")
-          : (styles.base || "flex-none shadow-gray-300 shadow-lg flex items-center text-xs font-semibold text-gray-700 relative z-[60]");
+          : (styles.base || "flex-none border-t border-r border-gray-100 flex items-center text-xs font-semibold text-gray-700 relative z-[60]");
             const backgroundClasses = isPlaceholder ? "" : (styles.background || "bg-gradient-to-t from-gray-50 via-white to-gray-100");
             const customClasses = styles.classes || "";
             const roundedClasses = isLast && styles.rounded ? styles.rounded : "";

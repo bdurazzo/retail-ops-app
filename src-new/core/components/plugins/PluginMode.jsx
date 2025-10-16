@@ -47,7 +47,7 @@ export default function PluginMode({
         pages={pages}
         activePage={activePage}
         onPageChange={setActivePage}
-        className="border-b border-gray-200"
+        className="p-2 border-b border-gray-200"
       />
 
       {/* Plugin Buttons */}

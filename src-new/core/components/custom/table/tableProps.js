@@ -38,11 +38,11 @@ export const DEFAULT_LAYOUT = {
  * Used for drag-and-drop table builder
  */
 export const MODULE_LAYOUT = {
-  firstColWidth: 150,
-  metricColWidth: 150,
-  headerHeight: 35,
-  rowHeight: 50,
-  footerHeight: 35,
+  firstColWidth: 160,
+  metricColWidth: 100,
+  headerHeight: 55,
+  rowHeight: 60,
+  footerHeight: 55,
   placeholderRows: 3,
   placeholderCols: 4
 };
@@ -61,7 +61,8 @@ export const DEFAULT_STYLES = {
 
   // Fixed column body (A2, C2)
   a2: {
-    cell: "flex-none px-3 flex items-center text-xs border-gray-100 shadow-xl relative z-20"
+    cell: "flex-none px-3 flex items-center text-xs border-gray-100 shadow-xl relative z-20",
+    ChA2: "flex-none px-0 flex items-center text-xs border-gray-100 shadow-xl relative z-20"
   },
 
   // Fixed column footer (A3, C3)
@@ -125,13 +126,15 @@ export const MODULE_STYLES = {
     base: "flex-none px-3 flex items-center text-xs text-gray-600 font-semibold relative z-50 transition-colors",
     sortable: "hover:bg-gradient-to-b from-gray-200 via-gray-50 to-gray-100 hover:text-gray-900 cursor-pointer",
     nonSortable: "text-gray-200",
-    pluginCell: "flex-none px-0 flex items-center text-xs text-gray-600 font-semibold relative z-50 transition-colors"
+    pluginCell: "flex-none px-0 border-r border-gray-100  flex items-center text-xs text-gray-600 font-semibold relative z-50 transition-colors",
+    ChA1: "w-full h-full border-r border-gray-100 px-0"
   },
 
   // Fixed column body (A2, C2)
   a2: {
     cell: "flex-none px-2 flex items-center text-xs shadow-lg border-r border-gray-100 relative z-10",
-    pluginCell: "flex-none px-0 flex items-center text-xs border-r border-gray-100 relative z-10"
+    pluginCell: "flex-none px-0 flex items-center text-xs border-r border-gray-100 relative z-10",
+    ChA2: "w-full h-full border-r border-gray-100 px-0"
   },
 
   // Fixed column footer (A3, C3)
@@ -142,7 +145,7 @@ export const MODULE_STYLES = {
   // Scrolling headers (B1, D1)
   b1: {
     cell: "flex items-center  border-gray-100 px-3 text-xs text-gray-600 font-semibold relative z-50",
-    sortable: "hover:bg-gradient-to-b from-gray-200 via-gray-50 to-gray-200 hover:text-gray-900 cursor-pointer",
+    sortable: "hover:bg-gradient-to-b from-gray-200 via-gray-50 to-gray-100 hover:text-gray-900 cursor-pointer",
     pluginCell: "flex items-center border-r border-gray-100 px-0 text-xs text-gray-600 font-semibold relative z-50"
   },
 

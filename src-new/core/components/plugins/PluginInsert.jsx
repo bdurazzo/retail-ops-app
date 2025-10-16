@@ -45,8 +45,9 @@ const SLOTS = [
 
 /**
  * Individual Slot Component
+ * Exported separately for use in table cells
  */
-function PluginSlot({
+export function PluginSlot({
   slot,
   pluginData,
   onDrop,
@@ -56,7 +57,6 @@ function PluginSlot({
   const Icon = slot.icon;
   const isEmpty = !pluginData;
   const isRequired = slot.required;
-  const [isDragging, setIsDragging] = React.useState(false);
 
   const handleDragOver = (e) => {
     e.preventDefault();
@@ -82,56 +82,27 @@ function PluginSlot({
     }
   };
 
-  const handleDragStart = (e) => {
-    e.stopPropagation();
-
-    // Serialize slot data for preview toolbars
-    const slotData = {
-      slotType: slot.id,
-      label: slot.label,
-      icon: slot.icon.name || slot.id,
-      required: slot.required,
-      description: slot.description
-    };
-
-    e.dataTransfer.setData('text/plain', JSON.stringify(slotData));
-    e.dataTransfer.effectAllowed = 'copy';
-    setIsDragging(true);
-  };
-
-  const handleDragEnd = (e) => {
-    setIsDragging(false);
-  };
-
   return (
-    <div className="px-1 pl-2 flex-1 flex-row items-center justify-center">
-      {/* Slot Drop Zone - Same size as filter plugin buttons */}
+    <div className="flex-1 flex-row items-center justify-center">
+      {/* Slot Drop Zone - Receives dropped plugins */}
       <div
-        draggable={true}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         className={`
-          relative w-[50px] h-[35px] rounded border-2 transition-all flex flex-col items-center justify-center gap-1 cursor-grab active:cursor-grabbing
+          relative w-7 h-7 rounded border-2 transition-all flex flex-col items-center justify-center gap-1
           ${isEmpty
             ? 'border-dashed border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
             : isValid
               ? 'border-solid border-green-400 bg-green-50'
               : 'border-solid border-gray-400 bg-white'
           }
-          ${isDragging ? 'opacity-50' : ''}
         `}
       >
         {/* Empty State */}
         {isEmpty && (
           <>
             <Icon size={20} stroke={1.5} className="text-gray-400" />
-            {isRequired && (
-              <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-red-500 text-white text-[8px] flex items-center justify-center font-bold">
-                !
-              </div>
-            )}
+       
           </>
         )}
 
@@ -191,7 +162,7 @@ export default function PluginInsert({
   const menuContents = {};
 
   return (
-    <div className="relative" data-ignore-outside="true">
+    <div className="relative w-full h-full" data-ignore-outside="true">
       {/* ControlPanel with slots in center */}
       <ControlPanel
         centerControls={centerControls}

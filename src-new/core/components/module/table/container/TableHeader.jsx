@@ -18,10 +18,16 @@ export default function TableHeader({
   columnWidths = {},
   fixedColumns = [],
   scrollingColumns = [],
+  allColumnKeys = [],
+  onColumnSwap = () => {},
   tableContext
 }) {
   // State management for column plugins
   const [columnState, setColumnState] = useState({});
+
+  // Extract sorting and column swap from tableContext
+  const { sortKey, sortDirection, onSort, onColumnSwap: onColumnSwapContext } = tableContext || {};
+  const finalOnColumnSwap = onColumnSwap || onColumnSwapContext;
 
   // Column drop handler - called when user drops plugin on a column header
   const handleColumnDrop = (columnKey, droppedData) => {
@@ -57,6 +63,7 @@ export default function TableHeader({
   // Build props for B1 section
   const b1Props = {
     columnKeys: scrollingColumns,
+    allColumnKeys: allColumnKeys.filter(key => !fixedColumns.includes(key)), // All non-fixed columns for picker
     columnLabels,
     columnWidths,
     styles: tableContext?.styles?.b1 || {},
@@ -64,6 +71,7 @@ export default function TableHeader({
     onColumnDrop: handleColumnDrop,
     columnState,
     onColumnStateUpdate: handleColumnStateUpdate,
+    onColumnSwap: finalOnColumnSwap,
     pluginComponents: {
       column: ColumnPlugin
     }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { getAlignmentClasses } from '../../tableProps.js';
+import ChB2 from '../../../../module/table/channel/ChB2.jsx';
 
 /**
  * B2Section - Scrolling body section
@@ -147,59 +148,28 @@ export default function B2Section({
 
                   // Normal cell rendering
                   const rowId = row?._rowId || `row_${rIdx}`;
-                  const cellKey = `${rowId}_${columnKey}`;
-                  const cellData = cellState[cellKey];
-
                   const colAlignment = columnAlignments[columnKey] || alignment;
-                  const baseClasses = styles.cell || "";
                   const contentClasses = isPlaceholder ? "text-transparent select-none" : "";
 
+                  // Build classes - use ChB2 style (px-0) for wrapper since ChB2 has its own padding
+                  const baseClasses = styles.ChB2 || "flex-none px-0 flex items-center text-xs border-r border-gray-100 relative z-10";
                   const className = `${baseClasses} ${getAlignmentClasses(colAlignment)} ${contentClasses}`.trim();
-
-                  const handleDrop = (e) => {
-                    e.preventDefault();
-                    if (onCellDrop) {
-                      const droppedData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                      onCellDrop(rowId, columnKey, droppedData);
-                    }
-                  };
-
-                  const handleDragOver = (e) => {
-                    // Only preventDefault for drag events, not wheel/scroll
-                    if (e.dataTransfer) {
-                      e.preventDefault();
-                    }
-                  };
-
-                  // Render plugin component if cellData has a plugin
-                  const PluginComponent = cellData?.type && pluginComponents?.[cellData.type];
-
-                  // Use pluginCell style if plugin exists, otherwise normal cell style
-                  const cellClassName = PluginComponent
-                    ? (styles.pluginCell || className)
-                    : className;
 
                   return (
                     <div
                       key={`b2c-${rIdx}-${columnKey}`}
-                      className={cellClassName}
+                      className={className}
                       style={{ height: rowHeight }}
                       title={row !== null ? (typeof cellContent === 'string' ? cellContent : display) : ""}
-                      onDrop={handleDrop}
-                      onDragOver={handleDragOver}
                     >
-                      {PluginComponent ? (
-                        <PluginComponent
-                          row={row}
-                          cellState={cellState}
-                          onCellStateUpdate={onCellStateUpdate}
-                          expandedRows={expandedRows}
-                          toggleRowExpanded={toggleRowExpanded}
-                          rowHeight={rowHeight}
-                        />
-                      ) : (
-                        cellData ? `[${cellData.type}]` : cellContent
-                      )}
+                      <ChB2
+                        rowId={rowId}
+                        columnKey={columnKey}
+                        cellValue={cellContent}
+                        cellState={cellState}
+                        onCellStateUpdate={onCellStateUpdate}
+                        tableContext={tableContext}
+                      />
                     </div>
                   );
                 })}

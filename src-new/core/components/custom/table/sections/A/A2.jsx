@@ -1,5 +1,6 @@
 import React from 'react';
 import { getAlignmentClasses } from '../../tableProps.js';
+import ChA2 from '../../../../module/table/channel/ChA2.jsx';
 
 /**
  * A2Section - Fixed column body section
@@ -106,7 +107,7 @@ export default function A2Section({
           return (
             <div
               key={`a2-${rIdx}`}
-              className={`${rIdx % 2 ? "bg-gray-50 relative z-20" : "bg-white relative z-20"} ${styles.classes || ""}`}
+              className={`${rIdx % 2 ? "bg-blue-50 relative z-20" : "bg-white relative z-20"} ${styles.classes || ""}`}
             >
               <div style={{ height: 'auto', minHeight: rowHeight }}>
                 {content.a2Content || content}
@@ -154,16 +155,6 @@ export default function A2Section({
               // Normal cell rendering
               const isPlaceholder = row === null;
               const rowId = row?._rowId || `row_${rIdx}`;
-              const cellKey = `${rowId}_${columnKey}`;
-              const cellData = cellState[cellKey];
-
-              // Render plugin component if cellData has a plugin
-              const PluginComponent = cellData?.type && pluginComponents?.[cellData.type];
-
-              // Use pluginCell style if plugin exists, otherwise normal cell style
-              const baseClasses = PluginComponent
-                ? (styles.pluginCell || styles.cell || "")
-                : (styles.cell || "");
               const contentClasses = isPlaceholder ? "text-transparent select-none" : "";
 
               const cellValue = isPlaceholder ? "Placeholder" : (
@@ -172,20 +163,8 @@ export default function A2Section({
                   : (row?.[columnKey] == null ? "" : String(row[columnKey]))
               );
 
-              const handleDrop = (e) => {
-                e.preventDefault();
-                if (onCellDrop) {
-                  const droppedData = JSON.parse(e.dataTransfer.getData('text/plain'));
-                  onCellDrop(rowId, columnKey, droppedData);
-                }
-              };
-
-              const handleDragOver = (e) => {
-                // Only preventDefault for drag events, not wheel/scroll
-                if (e.dataTransfer) {
-                  e.preventDefault();
-                }
-              };
+              // Build classes - use ChA2 style (px-0) for wrapper since ChA2 has its own padding
+              const baseClasses = styles.ChA2 || "flex-none px-0 flex items-center text-xs border-r border-gray-100 relative z-10";
 
               return (
                 <div
@@ -193,25 +172,16 @@ export default function A2Section({
                   className={`${baseClasses} ${getAlignmentClasses(colAlignment)} ${contentClasses}`}
                   style={{ width: colWidth, height: rowHeight }}
                   title={!isPlaceholder && row !== null && row?.[columnKey] ? String(row[columnKey]) : ""}
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
                 >
-                  {PluginComponent ? (
-                    <PluginComponent
-                      row={row}
-                      cellState={cellState}
-                      onCellStateUpdate={onCellStateUpdate}
-                      expandedRows={expandedRows}
-                      toggleRowExpanded={toggleRowExpanded}
-                      rowHeight={rowHeight}
-                    />
-                  ) : (
-                    <div className="w-full overflow-hidden">
-                      <div className="truncate">
-                        {cellData ? `[${cellData.type}]` : cellValue}
-                      </div>
-                    </div>
-                  )}
+                  <ChA2
+                    rowId={rowId}
+                    columnKey={columnKey}
+                    styles={styles}
+                    cellValue={cellValue}
+                    cellState={cellState}
+                    onCellStateUpdate={onCellStateUpdate}
+                    tableContext={tableContext}
+                  />
                 </div>
               );
             })}

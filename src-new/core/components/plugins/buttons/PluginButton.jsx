@@ -8,10 +8,10 @@ export default function PluginButton({
   plugin,
   onDragStart,
   wrapperClassName = "inline-flex flex-col rounded-xl items-center gap-1",
-  containerClassName = "w-10 items-center justify-center border border-gray-50 p-1 rounded bg-gradient-to-t from-gray-200 via-white to-gray-100 cursor-grab hover:bg-gray-50",
+  containerClassName = "w-7 h-7 items-center justify-center border border-gray-200 p-0.5 rounded bg-gradient-to-t from-gray-200 via-white to-gray-100 cursor-grab hover:bg-gray-50",
   iconClassName = "text-gray-500",
   labelClassName = "text-[11px] text-gray-600 font-medium whitespace-nowrap",
-  iconSize = 22,
+  iconSize = 20,
   iconStroke = 1.5,
   ...props
 }) {

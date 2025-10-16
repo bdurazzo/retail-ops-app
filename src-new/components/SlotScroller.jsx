@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const SlotScroller = ({ 
-  items = [], 
+const SlotScroller = ({
+  items = [],
   selectedValue = null,
   onValueChange = () => {},
   height = 80,
@@ -9,21 +9,36 @@ const SlotScroller = ({
   visibleItems = 3,
   className = "",
   showArrows = true,
-  scrollCoordinator = null
+  scrollCoordinator = null,
+  // Style props for internal elements
+  containerBgClassName = "bg-gradient-to-t from-gray-300 via-gray-200 to-gray-100",
+  topMaskClassName = "bg-gradient-to-b from-gray-100 via-white to-gray-50 border border-gray-100",
+  bottomMaskClassName = "bg-gradient-to-t from-gray-100 via-gray-50 to-gray-100 border border-gray-100",
+  highlightClassName = "bg-gradient-to-r from-gray-700 via-gray-600 to-gray-900 border border-gray-400",
+  arrowUpClassName = "bg-gradient-to-t from-gray-50 via-white to-gray-50 shadow-lg rounded-full w-6 h-6 border-2 border-gray-200",
+  arrowDownClassName = "bg-gradient-to-b from-gray-50 via-white to-gray-100 shadow-lg rounded-full w-6 h-6 border-2 border-gray-200",
+  itemClassName = "flex items-center justify-center text-center cursor-pointer relative",
+  // Font size controls
+  centerFontSize = "1rem",
+  edgeFontSize = "0.5rem",
+  centerFontWeight = 600,
+  edgeFontWeight = 300
 }) => {
   const [isScrolling, setIsScrolling] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scrollTop, setScrollTop] = useState(0);
   const scrollerRef = useRef(null);
   const itemsRef = useRef([]);
+  const lastScrolledValueRef = useRef(null);
 
   // Find initial selected index
   useEffect(() => {
     if (selectedValue !== null) {
-      const index = items.findIndex(item => 
+      const index = items.findIndex(item =>
         typeof item === 'object' ? item.value === selectedValue : item === selectedValue
       );
-      if (index >= 0) {
+      if (index >= 0 && selectedValue !== lastScrolledValueRef.current) {
+        lastScrolledValueRef.current = selectedValue;
         setSelectedIndex(index);
         scrollToIndex(index, false);
       }
@@ -96,10 +111,15 @@ const SlotScroller = ({
       timeoutId = setTimeout(() => {
         if (scrollerRef.current) {
           const clampedIndex = findCenterItem();
-          
+
           setSelectedIndex(clampedIndex);
-          
-          // Don't auto-apply values - only apply when highlight is clicked
+
+          // Auto-apply value after scroll settles
+          const selectedItem = items[clampedIndex];
+          if (selectedItem) {
+            const value = typeof selectedItem === 'object' ? selectedItem.value : selectedItem;
+            onValueChange(value, clampedIndex);
+          }
         }
       }, 200);
     };
@@ -151,8 +171,8 @@ const SlotScroller = ({
       opacity,
       transform: `scale(${scale})`,
       color: textColor,
-      fontWeight: normalizedDistance < 0.2 ? 600 : 300,
-      fontSize: normalizedDistance < 0.5 ? '1rem' : '0.5rem'
+      fontWeight: normalizedDistance < 0.2 ? centerFontWeight : edgeFontWeight,
+      fontSize: normalizedDistance < 0.5 ? centerFontSize : edgeFontSize
     };
 
     const overlayStyle = isOverlay ? {
@@ -166,7 +186,7 @@ const SlotScroller = ({
       <div
         key={isOverlay ? `overlay-${index}` : index}
         ref={isOverlay ? null : el => itemsRef.current[index] = el}
-        className="flex items-center justify-center text-center cursor-pointer relative"
+        className={itemClassName}
         style={{
           scrollSnapAlign: 'center',
           scrollSnapStop: 'always',
@@ -185,29 +205,29 @@ const SlotScroller = ({
   };
 
   return (
-    <div className={`relative bg-gradient-to-t from-gray-300 via-gray-200 to-gray-100 rounded shadow-xl ${className}`} style={{ height }}
+    <div className={`relative ${containerBgClassName} rounded shadow-xl ${className}`} style={{ height }}
       >
       {/* Top mask box - opaque cover for top third */}
-      <div 
-        className="absolute top-0 left-0 right-0 bg-gradient-to-b from-gray-100 via-white to-gray-50 border border-gray-100 z-[50] pointer-events-none"
-        style={{ 
+      <div
+        className={`absolute top-0 left-0 right-0 ${topMaskClassName} z-[50] pointer-events-none`}
+        style={{
           height: height / 3.4,
 
         }}
       />
       {/* Top mask border */}
-      <div 
+      <div
         className="absolute left-0 right-0  z-[51] pointer-events-none"
         style={{ top: height / 3 }}
       />
-        <div 
-         className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-gray-100 via-gray-50 to-gray-100 border border-gray-100 z-[50] pointer-events-none"
-         style={{ 
+        <div
+         className={`absolute bottom-0 left-0 right-0 ${bottomMaskClassName} z-[50] pointer-events-none`}
+         style={{
            height: height / 3.5
          }}
         />
       {/* Bottom mask border */}
-      <div 
+      <div
         className="absolute left-0 right-0 z-[51] pointer-events-none"
         style={{ bottom: height / 4 }}
       />
@@ -216,27 +236,25 @@ const SlotScroller = ({
       {showArrows && (
         <>
           <button
-            className="absolute top-2 left-1/2 transform -translate-x-1/2 border-2 border-gray-200 z-[60] 
-                       bg-gradient-to-t from-gray-50 via-white to-gray-50 shadow-lg rounded-full w-6 h-6 
-                       flex items-center justify-center hover:from-gray-300 hover:via-gray-100 hover:to-gray-100 
-                       transition-all text-gray-700 border border-gray-200 disabled:opacity-70 disabled:cursor-not-allowed"
+            className={`absolute top-1 left-1/2 transform -translate-x-1/2 z-[60]
+                       flex items-center justify-center hover:from-gray-300 hover:via-gray-100 hover:to-gray-100
+                       transition-all text-gray-700 disabled:opacity-70 disabled:cursor-not-allowed ${arrowUpClassName}`}
             onClick={() => handleArrowClick('up')}
             disabled={selectedIndex === 0}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M7 14l5-5 5 5z"/>
             </svg>
           </button>
-          
+
           <button
-            className="absolute bottom-2 left-1/2 transform -translate-x-1/2 border-2 border-gray-200 z-[100]
-                       bg-gradient-to-b from-gray-50 via-white to-gray-100 shadow-lg rounded-full w-6 h-6 
-                       flex items-center justify-center hover:from-gray-300 hover:via-gray-100 hover:to-gray-100 
-                       transition-all text-gray-700 border border-gray-200 disabled:opacity-70 disabled:cursor-not-allowed"
+            className={`absolute bottom-1 left-1/2 transform -translate-x-1/2 z-[100]
+                       flex items-center justify-center hover:from-gray-300 hover:via-gray-100 hover:to-gray-100
+                       transition-all text-gray-700 disabled:opacity-70 disabled:cursor-not-allowed ${arrowDownClassName}`}
             onClick={() => handleArrowClick('down')}
             disabled={selectedIndex === items.length - 1}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
               <path d="M7 10l5 5 5-5z"/>
             </svg>
           </button>
@@ -261,10 +279,9 @@ const SlotScroller = ({
       </div>
 
       {/* Selection highlight */}
-      <div 
-        className="absolute left-2 right-2 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-900 
-                   border border-gray-400 cursor-pointer z-[20] rounded"
-        style={{ 
+      <div
+        className={`absolute left-0 right-0  cursor-pointer z-[20] rounded ${highlightClassName}`}
+        style={{
           top: '50%',
           transform: 'translateY(-50%)',
           height: itemHeight,

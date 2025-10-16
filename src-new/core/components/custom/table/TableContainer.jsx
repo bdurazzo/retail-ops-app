@@ -39,6 +39,14 @@ export default function TableContainer({
   maxBodyHeight = null,
   columnWidths = {},
 
+  // Sorting
+  sortKey = null,
+  sortDirection = null,
+  onSort = () => {},
+
+  // Column swapping
+  onColumnSwap = () => {},
+
   ...props
 }) {
   // Extract layout values with defaults
@@ -157,7 +165,15 @@ export default function TableContainer({
     showFooter,
 
     // Body height handling
-    maxBodyHeight
+    maxBodyHeight,
+
+    // Sorting
+    sortKey,
+    sortDirection,
+    onSort,
+
+    // Column swapping
+    onColumnSwap
   };
 
   return (
@@ -189,7 +205,7 @@ export function TableToolbar({ children, tableContext, toolbarClasses = "flex-no
   );
 }
 
-export function TableHeader({ children, tableContext, headerClasses = "flex-none bg-gradient-to-b from-gray-50 via-gray-50 to-gray-1000", ...props }) {
+export function TableHeader({ children, tableContext, headerClasses = "flex-none bg-gradient-to-b from-gray-50 via-gray-50 to-gray-100", ...props }) {
   if (!tableContext?.showHeader) return null;
   
   return (
@@ -220,7 +236,7 @@ export function TableBody({ children, tableContext, ...props }) {
       }}
     >
       <div
-        className="flex h-full min-h-0 overflow-y-scroll overflow-x-hidden"
+        className="flex w-full h-full min-h-0 overflow-y-scroll overflow-x-hidden"
         ref={tableContext.vScrollRef}
         style={{ scrollbarGutter: 'stable both-edges' }}
       >

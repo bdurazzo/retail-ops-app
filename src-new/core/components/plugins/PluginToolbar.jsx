@@ -22,7 +22,8 @@ import {
   IconTable,
   IconRowInsertBottom,
   IconColumnInsertRight,
-  IconSquare
+  IconSquare,
+  IconTableColumn
 } from '@tabler/icons-react';
 
 export default function PluginToolbar({
@@ -102,7 +103,7 @@ export default function PluginToolbar({
   ];
 
   const insertButtons = [
-    { id: 'TABLE', icon: <IconTable size={20} stroke={1.75} />, title: 'Table' },
+    { id: 'TABLE', icon: <IconTableColumn size={20} stroke={1.75} />, title: 'Table' },
     { id: 'ROW', icon: <IconRowInsertBottom size={20} stroke={1.75} />, title: 'Row' },
     { id: 'COLUMN', icon: <IconColumnInsertRight size={20} stroke={1.75} />, title: 'Column' },
     { id: 'CELL', icon: <IconSquare size={20} stroke={1.75} />, title: 'Cell' }

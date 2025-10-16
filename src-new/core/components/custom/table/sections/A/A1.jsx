@@ -1,6 +1,7 @@
 import React from 'react';
 import { isColumnSortable, getSortIndicator } from '../../../../../utils/tableSorting.js';
 import { getAlignmentClasses } from '../../tableProps.js';
+import ChA1 from '../../../../module/table/channel/ChA1.jsx';
 
 /**
  * A1Section - Fixed header left section (A/B system)
@@ -46,13 +47,19 @@ export default function A1Section({
     a1HeaderLabel,
     onA1Drop: onA1DropContext,
     onDragOver: onDragOverContext,
-    isTransitioning: isTransitioningContext
+    isTransitioning: isTransitioningContext,
+    sortKey: sortKeyContext,
+    sortDirection: sortDirectionContext,
+    onSort: onSortContext
   } = tableContext || { headerHeight: 35, firstColWidth: 120 };
 
   // Use explicit props if provided, otherwise fall back to context
   const onA1Drop = onA1DropProp || onA1DropContext;
   const onDragOver = onDragOverProp || onDragOverContext;
   const isTransitioning = isTransitioningProp ?? isTransitioningContext;
+  const finalSortKey = sortKey !== undefined ? sortKey : sortKeyContext;
+  const finalSortDirection = sortDirection !== undefined ? sortDirection : sortDirectionContext;
+  const finalOnSort = onSort || onSortContext;
 
   // If empty, render empty state from container config
   if (isEmpty) {
@@ -93,64 +100,20 @@ export default function A1Section({
         const sortable = !isPlaceholder && !disableSorting && isColumnSortable(columnKey);
 
         // Handle click
-        const handleClick = sortable ? () => onSort(columnKey) : undefined;
+        const handleClick = sortable && finalOnSort ? () => finalOnSort(columnKey) : undefined;
 
-        // Handle plugin drop on column header
-        const handleColumnPluginDrop = (e) => {
-          e.preventDefault();
-          if (onColumnDrop) {
-            const droppedData = JSON.parse(e.dataTransfer.getData('text/plain'));
-            onColumnDrop(columnKey, droppedData);
-          }
-        };
+        // Default header rendering
+        const label = a1HeaderLabel || displayLabel;
 
-        const handleColumnDragOver = (e) => {
-          // Only preventDefault for drag events, not wheel/scroll
-          if (e.dataTransfer) {
-            e.preventDefault();
-          }
-        };
-
-        // Check if this column has a plugin
-        const columnData = columnState[columnKey];
-        const ColumnPluginComponent = columnData?.type && pluginComponents?.[columnData.type];
-
-        // Build classes - use pluginCell if plugin exists, otherwise normal styling
-        const baseClasses = ColumnPluginComponent
-          ? (styles.pluginCell || styles.base || "")
-          : isPlaceholder
-            ? (styles.placeholder || "flex-none px-3 flex items-center justify-center text-xs text-gray-400 border-b border-r border-gray-100 font-semibold relative z-50 bg-gradient-to-b from-gray-50 via-white to-gray-100")
-            : (styles.base || "flex-none px-3 flex items-center text-xs shadow-lg shadow-gray-300 text-gray-600 font-semibold relative z-50 transition-colors");
-        const sortableClasses = sortable ? (styles.sortable || "hover:bg-gray-200 hover:text-white cursor-pointer") : (styles.nonSortable || "text-gray-200");
+        // Build classes - use pluginCell (px-0) for wrapper since ChA1 has its own padding
+        const baseClasses = isPlaceholder
+          ? (styles.placeholder || "flex-none px-3 flex items-center justify-center text-xs text-gray-400 border-b border-r border-gray-100 font-semibold relative z-50 bg-gradient-to-b from-gray-100 via-white to-gray-100")
+          : (styles.pluginCell || "flex-none px-0 flex items-center text-xs text-gray-600 font-semibold relative z-50 transition-colors");
+        const sortableClasses = sortable ? (styles.sortable || "hover:bg-gray-100 hover:text-white cursor-pointer") : (styles.nonSortable || "text-gray-200");
         const customClasses = styles.classes || "";
         const roundedClasses = (index === 0 && styles.rounded) ? styles.rounded : "";
 
         const className = `${baseClasses} ${sortableClasses} ${customClasses} ${roundedClasses} ${getAlignmentClasses(colAlignment)}`.trim();
-
-        // Render custom content if provided
-        if (customRenderer && customRenderer[columnKey]) {
-          const customContent = customRenderer[columnKey](columnKey, displayLabel);
-
-          // Handle special full-width toolbar case
-          if (customContent && typeof customContent === 'object' && customContent.type === 'fullWidthToolbar') {
-            return customContent.component;
-          }
-
-          return (
-            <div
-              key={columnKey}
-              className={className}
-              style={{ width: colWidth, height: headerHeight }}
-              title={columnKey}
-              onClick={handleClick}
-            >
-              {customContent}
-            </div>
-          );
-        }
-
-        // Default header rendering with drop zone support
-        const label = a1HeaderLabel || displayLabel;
 
         return (
           <div
@@ -159,27 +122,14 @@ export default function A1Section({
             style={{ width: colWidth, height: headerHeight }}
             title={columnKey}
             onClick={handleClick}
-            onDrop={onA1Drop || handleColumnPluginDrop}
-            onDragOver={onDragOver || handleColumnDragOver}
           >
-            {ColumnPluginComponent ? (
-              <ColumnPluginComponent
-                columnKey={columnKey}
-                columnState={columnState}
-                onColumnStateUpdate={onColumnStateUpdate}
-              />
-            ) : (
-              <>
-                <span className={isTransitioning ? 'opacity-0' : 'opacity-100 transition-opacity duration-300'}>
-                  {label}
-                </span>
-                {sortKey === columnKey && (
-                  <span className="ml-1 text-gray-600">
-                    {getSortIndicator(columnKey, sortKey, sortDirection)}
-                  </span>
-                )}
-              </>
-            )}
+            <ChA1
+              columnKey={columnKey}
+              columnLabel={label}
+              columnState={columnState}
+              onColumnStateUpdate={onColumnStateUpdate}
+              tableContext={tableContext}
+            />
           </div>
         );
       })}

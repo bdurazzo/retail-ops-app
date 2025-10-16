@@ -109,7 +109,7 @@ export default function PluginDropdown({
 
             <div ref={contentRef}>
               {/* Scrollable Content */}
-              <div className="h-[270px] overflow-y-auto">
+              <div className=" h-min-[260px] overflow-y-auto">
                 {PanelComponent ? (
                   <PanelComponent
                     key={activeTab}

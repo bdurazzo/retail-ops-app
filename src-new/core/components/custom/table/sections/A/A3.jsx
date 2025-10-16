@@ -71,8 +71,8 @@ export default function A3Section({
         // Build classes - use placeholder styling if needed
         const baseClasses = isPlaceholder
           ? (styles.placeholder || "flex-none shadow-gray-200 shadow flex border-t border-gray-100 items-center justify-center text-xs font-semibold text-gray-400 relative z-[60] bg-gradient-to-t from-gray-100 via-white to-gray-100")
-          : (styles.base || "flex-none shadow-gray-300 shadow-lg flex items-center text-xs font-semibold text-gray-700 relative z-[60]");
-        const backgroundClasses = isPlaceholder ? "" : (styles.background || "bg-gradient-to-t from-gray-50 via-white to-gray-100");
+          : (styles.base || "flex-none shadow-gray-200 shadow-lg border-t border-r border-gray-100 flex items-center text-xs font-semibold text-gray-700 relative z-[60]");
+        const backgroundClasses = isPlaceholder ? "" : (styles.background || "bg-gradient-to-r from-gray-50 via-white to-gray-50");
         const customClasses = styles.classes || "";
         const roundedClasses = (index === 0 && styles.rounded) ? styles.rounded : "";
 
