@@ -68,9 +68,6 @@ export default function TableController({
 
       {/* PluginController - Query Builder */}
 
-
-      {/* Table toolbar bar */}
-      <TableToolbar tableContext={tableContext} />
     </div>
   );
 }

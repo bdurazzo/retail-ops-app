@@ -22,19 +22,20 @@ export default function ChannelStrip({
   noPadding = false, // Remove parent cell padding
   alwaysShowToolbar = false, // Keep toolbar visible without hover
   disableHover = false, // Disable toolbar hover entirely
+  disableToolbar = false, // Completely hide toolbar and hover trigger
   toolbarBackgroundColor = null,
   toolbarLeftContent = null,
   toolbarCenterContent = null,
   toolbarRightContent = null
 }) {
   const [isDragOver, setIsDragOver] = useState(false);
-  const [isHovered, setIsHovered] = useState(alwaysShowToolbar && !disableHover);
-  const [showToolbar, setShowToolbar] = useState(alwaysShowToolbar && !disableHover);
+  const [isHovered, setIsHovered] = useState(alwaysShowToolbar && !disableHover && !disableToolbar);
+  const [showToolbar, setShowToolbar] = useState(alwaysShowToolbar && !disableHover && !disableToolbar);
   const hoverTimeoutRef = React.useRef(null);
   const leaveTimeoutRef = React.useRef(null);
 
   const handleMouseEnterTrigger = () => {
-    if (alwaysShowToolbar || disableHover) return;
+    if (alwaysShowToolbar || disableHover || disableToolbar) return;
 
     // Clear any pending leave timeout
     if (leaveTimeoutRef.current) {
@@ -124,13 +125,15 @@ export default function ChannelStrip({
       {children}
 
       {/* Hover trigger area - small zone at top of cell */}
-      <div
-        className="absolute left-0 top-0 right-0 h-5 z-40"
-        onMouseEnter={handleMouseEnterTrigger}
-      />
+      {!disableToolbar && (
+        <div
+          className="absolute left-0 top-0 right-0 h-5 z-40"
+          onMouseEnter={handleMouseEnterTrigger}
+        />
+      )}
 
       {/* Hover Toolbar */}
-      {isHovered && (
+      {!disableToolbar && isHovered && (
         <div
           className={`absolute left-0 right-0 top-0 h-full w-full z-50 pointer-events-auto transition-opacity duration-300 ${
             showToolbar ? 'opacity-100' : 'opacity-0'

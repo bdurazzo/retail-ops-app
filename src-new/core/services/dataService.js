@@ -306,10 +306,78 @@ export async function loadAnalyticsData(query = {}, panelState = {}, currentView
         
         rawData = allLineItems.filter(item => orderIds.has(item.order_id));
         console.log(`dataService: Filtered to ${rawData.length} line items for orders in date range`);
+
+        // Step 4: Enrich line items with order data (date_time, customer, etc.)
+        const ordersMap = new Map(filteredOrders.map(order => [order.order_id, order]));
+        rawData = rawData.map(lineItem => {
+          const order = ordersMap.get(lineItem.order_id);
+          if (order) {
+            return {
+              ...lineItem,
+              date_time: order.date_time,
+              customer_name: order.customer_name,
+              associate: order.associate,
+              channel: order.channel,
+              fulfillment_location: order.fulfillment_location
+            };
+          }
+          return lineItem;
+        });
+        console.log(`dataService: Enriched ${rawData.length} line items with order data`);
         
       } else {
-        // No date filter - load all line items
-        rawData = await loadLineItemsData(config.year, config.month);
+        // No date filter - load ALL time data and enrich with orders
+        console.log('dataService: No date filter - loading all available data');
+
+        // Step 1: Load all orders from all available months
+        let allOrders = [];
+        for (const yearInfo of AVAILABLE_MONTHS) {
+          for (const month of yearInfo.months) {
+            try {
+              const monthData = await loadOrdersData(yearInfo.year, month);
+              if (monthData && monthData.length > 0) {
+                allOrders.push(...monthData);
+              }
+            } catch (error) {
+              console.warn(`dataService: Failed to load orders for ${yearInfo.year}-${month}:`, error);
+            }
+          }
+        }
+        console.log(`dataService: Loaded ${allOrders.length} total orders from all time`);
+
+        // Step 2: Load all line items from all available months
+        let allLineItems = [];
+        for (const yearInfo of AVAILABLE_MONTHS) {
+          for (const month of yearInfo.months) {
+            try {
+              const monthData = await loadLineItemsData(yearInfo.year, month);
+              if (monthData && monthData.length > 0) {
+                allLineItems.push(...monthData);
+              }
+            } catch (error) {
+              console.warn(`dataService: Failed to load line items for ${yearInfo.year}-${month}:`, error);
+            }
+          }
+        }
+        console.log(`dataService: Loaded ${allLineItems.length} total line items from all time`);
+
+        // Step 3: Enrich line items with order data
+        const ordersMap = new Map(allOrders.map(order => [order.order_id, order]));
+        rawData = allLineItems.map(lineItem => {
+          const order = ordersMap.get(lineItem.order_id);
+          if (order) {
+            return {
+              ...lineItem,
+              date_time: order.date_time,
+              customer_name: order.customer_name,
+              associate: order.associate,
+              channel: order.channel,
+              fulfillment_location: order.fulfillment_location
+            };
+          }
+          return lineItem;
+        });
+        console.log(`dataService: Enriched ${rawData.length} line items with order data (all time)`);
       }
     }
     

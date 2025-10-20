@@ -1,103 +1,76 @@
-// --------------------------------------------------
-// Chart.jsx – Recharts view consuming ChartDTO via pipeline
-// Option B: derives ChartDTO from table.rows using chartFeeder
-// --------------------------------------------------
+import React from 'react';
+import ChartContainer from './core/ChartContainer.jsx';
+import HorizontalBars from './core/HorizontalBars.jsx';
 
-import React, { useMemo } from "react";
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  BarChart,
-  Bar,
-  AreaChart,
-  Area,
-} from "recharts";
-// import { toChart } from "../../feeders/chartFeeder.js";
-const toChart = (data) => ({ categories: [], series: [] }); // Mock implementation
+/**
+ * Chart - Main chart component
+ *
+ * Receives same data flow as tables: table and rawData props from DataView
+ */
 
-// Small helper to turn ChartDTO into Recharts data array
-function dtoToRechartsData(chartDTO) {
-  const { categories = [], series = [] } = chartDTO || {};
-  return categories.map((cat, i) => {
-    const row = { category: cat };
-    for (const s of series) {
-      row[s.name] = s.data?.[i] ?? 0;
-    }
-    return row;
-  });
-}
+export default function Chart({ table, rawData, height = "100%" }) {
+  console.log('Chart render:', { table, rawDataLength: rawData?.length });
 
-export default function Chart({
-  table,
-  type = "line", // 'line' | 'bar' | 'area'
-  height = 300,
-  xKey = "__mm",
-  yKey = "Product Net",
-}) {
-  const rows = table?.rows || [];
+  // Use rawData if available, otherwise fall back to table rows
+  const data = rawData || table?.rows || [];
 
-  const chartDTO = useMemo(() => toChart(rows, { xKey, yKey }), [rows, xKey, yKey]);
-  const data = useMemo(() => dtoToRechartsData(chartDTO), [chartDTO]);
-  const series = chartDTO.series || [];
+  if (!data.length) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-gradient-to-b from-gray-100 via-white to-gray-50 border border-gray-200 rounded-xl">
+        <div className="text-center p-8">
+          <div className="text-6xl mb-4">📊</div>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">No Data</h3>
+          <p className="text-sm text-gray-500">Select products or adjust filters to see chart</p>
+        </div>
+      </div>
+    );
+  }
 
-  const common = (
-    <>
-      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-      <XAxis dataKey="category" tick={{ fontSize: 11, fill: "#6b7280" }} />
-      <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} />
-      <Tooltip wrapperStyle={{ fontSize: 12 }} />
-      <Legend wrapperStyle={{ fontSize: 12 }} />
-    </>
-  );
+  // Group by product_name and sum quantities
+  const productTotals = data.reduce((acc, row) => {
+    const product = row.product_name || row.product_title || 'Unknown';
+    const qty = parseFloat(row.quantity) || 0;
+    acc[product] = (acc[product] || 0) + qty;
+    return acc;
+  }, {});
+
+  // Convert to array format, take top 10
+  const chartData = Object.entries(productTotals)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10);
+
+  console.log('Chart data:', chartData);
 
   return (
-    <div className="w-full border-t border-gray-200 shadow-xl rounded-b-xl bg-white" style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">
-        {type === "bar" ? (
-          <BarChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
-            {common}
-            {series.map((s, idx) => (
-              <Bar key={s.name} dataKey={s.name} fill={["#0ea5e9", "#22c55e", "#f59e0b", "#ef4444"][idx % 4]} />
-            ))}
-          </BarChart>
-        ) : type === "area" ? (
-          <AreaChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
-            {common}
-            {series.map((s, idx) => (
-              <Area
-                key={s.name}
-                type="monotone"
-                dataKey={s.name}
-                stroke={["#0ea5e9", "#22c55e", "#f59e0b", "#ef4444"][idx % 4]}
-                fill={["#bae6fd", "#bbf7d0", "#fde68a", "#fecaca"][idx % 4]}
-                fillOpacity={0.5}
-                strokeWidth={2}
-              />
-            ))}
-          </AreaChart>
-        ) : (
-          <LineChart data={data} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
-            {common}
-            {series.map((s, idx) => (
-              <Line
-                key={s.name}
-                type="monotone"
-                dataKey={s.name}
-                stroke={["#0ea5e9", "#22c55e", "#f59e0b", "#ef4444"][idx % 4]}
-                strokeWidth={2}
-                dot={false}
-                isAnimationActive={false}
-              />
-            ))}
-          </LineChart>
-        )}
-      </ResponsiveContainer>
-    </div>
+    <ChartContainer>
+      {(chartContext) => (
+        <svg
+          width={chartContext.width}
+          height={chartContext.height}
+          className="overflow-visible"
+        >
+          {/* Background */}
+          <rect
+            x={chartContext.padding.left}
+            y={chartContext.padding.top}
+            width={chartContext.chartWidth}
+            height={chartContext.chartHeight}
+            fill="rgba(249, 250, 251, 0.5)"
+            stroke="#e5e7eb"
+            strokeWidth={1}
+            rx={4}
+          />
+
+          {/* Just the bars, nothing else */}
+          <HorizontalBars
+            data={chartData}
+            chartContext={chartContext}
+            xKey="name"
+            yKey="value"
+          />
+        </svg>
+      )}
+    </ChartContainer>
   );
 }

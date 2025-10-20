@@ -30,6 +30,7 @@ export default function ChB2({
       pluginData={cellState[cellKey]}
       onUpdate={(data) => onCellStateUpdate(cellKey, data)}
       tableContext={tableContext}
+      disableToolbar={true}
       toolbarLeftContent={
         <div className="absolute left-0 top-0 h-5 bg-transparant">
           <button

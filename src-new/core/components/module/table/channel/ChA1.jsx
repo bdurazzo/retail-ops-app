@@ -45,7 +45,7 @@ export default function ChA1({
         <div className="absolute top-0 right-0"></div>
       }
     >
-      <span className="px-4 border-2 bg-gradient-to-l from-gray-700 via-gray-600 to-gray-700 text-white py-2 rounded-lg">{columnLabel}</span>
+      <span className="flex items-center justify-center  w-[70px] h-[25px] bg-gradient-to-l from-gray-700 via-gray-600/90 to-gray-700 text-white rounded">{columnLabel}</span>
       {sortKey === columnKey && (
         <span className="absolute right-3 text-gray-600">
           {getSortIndicator(columnKey, sortKey, sortDirection)}

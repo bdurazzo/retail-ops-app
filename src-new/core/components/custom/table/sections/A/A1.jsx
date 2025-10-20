@@ -107,8 +107,8 @@ export default function A1Section({
 
         // Build classes - use pluginCell (px-0) for wrapper since ChA1 has its own padding
         const baseClasses = isPlaceholder
-          ? (styles.placeholder || "flex-none px-3 flex items-center justify-center text-xs text-gray-400 border-b border-r border-gray-100 font-semibold relative z-50 bg-gradient-to-b from-gray-100 via-white to-gray-100")
-          : (styles.pluginCell || "flex-none px-0 flex items-center text-xs text-gray-600 font-semibold relative z-50 transition-colors");
+          ? (styles.placeholder || "flex-none px-3 flex items-center justify-center text-xs text-gray-400 border-b border-r border-gray-100 font-medium relative z-50 bg-gradient-to-b from-gray-100 via-white to-gray-100")
+          : (styles.pluginCell || "flex-none px-0 flex items-center text-[11px] text-gray-600 font-medium relative z-50 transition-colors");
         const sortableClasses = sortable ? (styles.sortable || "hover:bg-gray-100 hover:text-white cursor-pointer") : (styles.nonSortable || "text-gray-200");
         const customClasses = styles.classes || "";
         const roundedClasses = (index === 0 && styles.rounded) ? styles.rounded : "";

@@ -162,3 +162,116 @@ export const filterNonZero = (rows, field) => {
   if (!Array.isArray(rows)) return [];
   return rows.filter(row => toNumber(row?.[field]) !== 0);
 };
+
+/**
+ * Coupled Pairs Analysis Functions
+ * Used for multivariate product analysis
+ */
+
+/**
+ * Find all unique orders that contain ALL specified products
+ * @param {Array} lineItems - Array of line item records
+ * @param {Array} productNames - Array of product names to find together
+ * @returns {Set} Set of order IDs containing all specified products
+ */
+export const findOrdersWithProducts = (lineItems, productNames) => {
+  if (!Array.isArray(lineItems) || !Array.isArray(productNames)) return new Set();
+  if (productNames.length === 0) return new Set();
+
+  // Group line items by order
+  const orderGroups = groupBy(lineItems, 'order_id');
+  const matchingOrders = new Set();
+
+  // Check each order for all specified products
+  orderGroups.forEach((items, orderId) => {
+    const productsInOrder = new Set(items.map(item => item.product_name));
+    const hasAllProducts = productNames.every(name => productsInOrder.has(name));
+
+    if (hasAllProducts) {
+      matchingOrders.add(orderId);
+    }
+  });
+
+  return matchingOrders;
+};
+
+/**
+ * Calculate attach rate for a product
+ * Measures how frequently a product appears with other products vs. alone
+ * @param {Array} lineItems - Array of line item records
+ * @param {string} productName - Product to calculate attach rate for
+ * @param {Array} referenceProducts - Optional array of product names to calculate attach rate against
+ * @returns {number} Attach rate (0-1 scale)
+ */
+export const calculateAttachRate = (lineItems, productName, referenceProducts = null) => {
+  if (!Array.isArray(lineItems) || !productName) return 0;
+
+  const orderGroups = groupBy(lineItems, 'order_id');
+
+  // If reference products provided, calculate attach rate relative to those
+  if (referenceProducts && Array.isArray(referenceProducts) && referenceProducts.length > 0) {
+    let ordersWithReferenceProducts = 0;
+    let ordersWithBothReferenceAndTarget = 0;
+
+    orderGroups.forEach((items) => {
+      const productNames = items.map(item => item.product_name);
+
+      // Does this order contain any reference products?
+      const hasReferenceProduct = referenceProducts.some(refProduct => productNames.includes(refProduct));
+
+      if (hasReferenceProduct) {
+        ordersWithReferenceProducts++;
+
+        // Does it also contain the target product?
+        if (productNames.includes(productName)) {
+          ordersWithBothReferenceAndTarget++;
+        }
+      }
+    });
+
+    if (ordersWithReferenceProducts === 0) return 0;
+    // Return as percentage (0-100) with 1 decimal place
+    const rate = (ordersWithBothReferenceAndTarget / ordersWithReferenceProducts) * 100;
+    return round(rate, 1);
+  }
+
+  // Default behavior: calculate general multi-item attach rate
+  let ordersWithProduct = 0;
+  let ordersWithProductAndOthers = 0;
+
+  orderGroups.forEach((items) => {
+    const hasProduct = items.some(item => item.product_name === productName);
+
+    if (hasProduct) {
+      ordersWithProduct++;
+
+      // Check if order has other products besides this one
+      const hasOtherProducts = items.some(item => item.product_name !== productName);
+      if (hasOtherProducts) {
+        ordersWithProductAndOthers++;
+      }
+    }
+  });
+
+  if (ordersWithProduct === 0) return 0;
+  return round(ordersWithProductAndOthers / ordersWithProduct, 2);
+};
+
+/**
+ * Calculate sales velocity for a product
+ * Measures order frequency (orders per day)
+ * @param {Array} lineItems - Array of line item records for a product
+ * @param {Object} dateRange - Object with {days: number} representing the time period
+ * @returns {number} Orders per day (rounded to 2 decimals)
+ */
+export const calculateVelocity = (lineItems, dateRange) => {
+  if (!Array.isArray(lineItems) || lineItems.length === 0) return 0;
+
+  // Count unique orders for this product
+  const uniqueOrders = new Set(lineItems.map(item => item.order_id)).size;
+
+  // Use provided days from dateRange (e.g., 30 days for a month of data)
+  const days = dateRange?.days || 30;
+
+  return days > 0 ? round(uniqueOrders / days, 2) : 0;
+};

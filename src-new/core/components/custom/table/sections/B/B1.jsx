@@ -109,6 +109,8 @@ export default function B1Section({
 
             const className = `${baseClasses} ${sortableClasses} ${customClasses} ${roundedClasses} ${getAlignmentClasses(colAlignment)}`.trim();
 
+            const handleClick = sortable && finalOnSort ? () => finalOnSort(columnKey) : undefined;
+
             return (
               <div
                 key={`b1-${columnKey}`}
@@ -117,7 +119,7 @@ export default function B1Section({
                 draggable={!!onHeaderDragStart}
                 onDragStart={onHeaderDragStart ? (e) => onHeaderDragStart(e, columnKey) : undefined}
               >
-                <div className="pointer-events-auto w-full h-full">
+                <div className="pointer-events-auto w-full h-full" onClick={handleClick}>
                   <ChB1
                     columnKey={columnKey}
                     columnLabel={displayLabel}

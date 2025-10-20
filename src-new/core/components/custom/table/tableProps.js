@@ -38,11 +38,11 @@ export const DEFAULT_LAYOUT = {
  * Used for drag-and-drop table builder
  */
 export const MODULE_LAYOUT = {
-  firstColWidth: 160,
-  metricColWidth: 100,
-  headerHeight: 55,
-  rowHeight: 60,
-  footerHeight: 55,
+  firstColWidth: 150,
+  metricColWidth: 105,
+  headerHeight: 40,
+  rowHeight: 30,
+  footerHeight: 35,
   placeholderRows: 3,
   placeholderCols: 4
 };
@@ -73,7 +73,7 @@ export const DEFAULT_STYLES = {
   // Scrolling headers (B1, D1)
   b1: {
     cell: "flex items-center border-r border-gray-100 px-3 text-xs text-gray-600 font-semibold relative z-50",
-    sortable: "hover:bg-gradient-to-b from-gray-200 via-gray-50 to-gray-200 hover:text-gray-900 cursor-pointer",
+    sortable: {/*"hover:bg-gradient-to-b from-gray-200 via-gray-50 to-gray-200 hover:text-gray-900 cursor-pointer",*/},
     pluginCell: "flex items-center border-r border-gray-100 px-0 text-xs text-gray-600 font-semibold relative z-50"
   },
 
@@ -123,10 +123,10 @@ export const DEFAULT_STYLES = {
 export const MODULE_STYLES = {
   // Fixed column headers (A1, C1)
   a1: {
-    base: "flex-none px-3 flex items-center text-xs text-gray-600 font-semibold relative z-50 transition-colors",
+    base: "flex-none px-3 flex items-center text-[11px] text-gray-600 font-semibold relative z-50 transition-colors",
     sortable: "hover:bg-gradient-to-b from-gray-200 via-gray-50 to-gray-100 hover:text-gray-900 cursor-pointer",
     nonSortable: "text-gray-200",
-    pluginCell: "flex-none px-0 border-r border-gray-100  flex items-center text-xs text-gray-600 font-semibold relative z-50 transition-colors",
+    pluginCell: "flex-none px-0 border-r border-gray-100  flex items-center text-[11px] text-gray-600 font-medium relative z-50 transition-colors",
     ChA1: "w-full h-full border-r border-gray-100 px-0"
   },
 
@@ -145,8 +145,8 @@ export const MODULE_STYLES = {
   // Scrolling headers (B1, D1)
   b1: {
     cell: "flex items-center  border-gray-100 px-3 text-xs text-gray-600 font-semibold relative z-50",
-    sortable: "hover:bg-gradient-to-b from-gray-200 via-gray-50 to-gray-100 hover:text-gray-900 cursor-pointer",
-    pluginCell: "flex items-center border-r border-gray-100 px-0 text-xs text-gray-600 font-semibold relative z-50"
+    sortable: {/*"hover:bg-gradient-to-b from-gray-200 via-gray-50 to-gray-100 hover:text-gray-900 cursor-pointer",*/},
+    pluginCell: "flex items-center px-0 text-xs text-gray-600 font-semibold relative z-50"
   },
 
   // Scrolling body (B2, D2)

@@ -22,11 +22,14 @@ export default function TableBody({
   columnWidths = {},
   fixedColumns = [],
   scrollingColumns = [],
-  tableContext
+  tableContext,
+  // New props for coupled pairs system
+  expandable = false,
+  nestedRowRenderer = null
 }) {
   // State management
   const [cellState, setCellState] = useState({});
-  const [expandedRows, setExpandedRows] = useState({});
+  const [expandedRows, setExpandedRows] = useState(new Set());
 
   // Cell drop handler - called when user drops plugin on a cell
   const handleCellDrop = (rowId, columnKey, droppedData) => {
@@ -47,10 +50,23 @@ export default function TableBody({
 
   // Row expansion toggle
   const toggleRowExpanded = (rowId) => {
-    setExpandedRows(prev => ({
-      ...prev,
-      [rowId]: !prev[rowId]
-    }));
+    if (expandable) {
+      setExpandedRows(prev => {
+        const next = new Set(prev);
+        if (next.has(rowId)) {
+          next.delete(rowId);
+        } else {
+          next.add(rowId);
+        }
+        return next;
+      });
+    } else {
+      // Legacy behavior for plugins
+      setExpandedRows(prev => ({
+        ...prev,
+        [rowId]: !prev[rowId]
+      }));
+    }
   };
 
   // Check if a row has a TablePlugin assigned
@@ -91,6 +107,8 @@ export default function TableBody({
     onCellStateUpdate: handleCellStateUpdate,
     expandedRows,
     toggleRowExpanded,
+    expandable,
+    nestedRowRenderer,
     // Pass plugin components so A2 can render them in cells
     pluginComponents: {
       table: TablePlugin,
@@ -110,6 +128,8 @@ export default function TableBody({
     onCellStateUpdate: handleCellStateUpdate,
     expandedRows,
     toggleRowExpanded,
+    expandable,
+    nestedRowRenderer,
     // Pass plugin components so B2 can render them in cells
     pluginComponents: {
       table: TablePlugin,

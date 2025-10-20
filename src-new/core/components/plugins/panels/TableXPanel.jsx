@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import SlotScroller from '../../../../components/SlotScroller.jsx';
-import {IconAwardFilled, IconCalculatorFilled, IconClockHour9Filled, IconLayoutSidebarFilled, IconLayoutSidebarRightFilled, IconShirtFilled, IconTagsFilled} from '@tabler/icons-react'
+import {IconAwardFilled, IconCalculatorFilled, IconClockHour9Filled, IconLayoutSidebarFilled, IconLayoutSidebarRightFilled, IconShirtFilled, IconTableColumn, IconTableRow, IconTagsFilled} from '@tabler/icons-react'
 import { Icon } from 'lucide-react';
 
 class ScrollCoordinator {
@@ -33,13 +33,13 @@ class ScrollCoordinator {
   }
 }
 
-export default function TablePluginPanel({
+export default function TableXPanel({
   onPanelStateChange,
   panelCommand,
   // Container props
   containerClassName = "flex flex-col bg-gray-50 p-4",
   headerClassName = "flex items-center justify-center text-sm text-gray-700 font-semibold mb-3",
-  headerText = "Table Configuration",
+  headerText = "Table X Configuration",
   // Slot wrapper props
   slotsContainerClassName = "flex mt-0",
   slotWrapperClassName = "flex-1 flex-row px-1 items-center",
@@ -253,16 +253,16 @@ export default function TablePluginPanel({
   const tableSlots = [
     {
       key: 'tableType',
-      icon: IconAwardFilled,
-      label: 'Compare',
+      icon: IconTableColumn,
+      label: 'Primary',
       items: getSlot1Items(),
       footerBefore: 'filter ',
       footerAfter: ' by '
     },
     {
       key: 'columnType',
-      icon: IconCalculatorFilled,
-      label: 'Measure',
+      icon: IconTableRow,
+      label: 'Secondary',
       items: getSlot2Items(selectedParams.tableType),
       footerBefore: '',
       footerAfter: ' with '

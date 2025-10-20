@@ -5,9 +5,10 @@ import MetricPluginPanel from './panels/MetricPluginPanel.jsx';
 import TimePluginPanel from './panels/TimePluginPanel.jsx';
 import ElementPluginPanel from './panels/ElementPluginPanel.jsx';
 import TrendPluginPanel from './panels/TrendPluginPanel.jsx';
-import TablePluginPanel from './panels/TablePluginPanel.jsx';
-import RowPluginPanel from './panels/RowPluginPanel.jsx';
-import ColumnPluginPanel from './panels/ColumnPluginPanel.jsx';
+import PairAnalysisPluginPanel from './panels/PairAnalysisPluginPanel.jsx';
+import TableXPanel from './panels/TableXPanel.jsx';
+import TableYPanel from './panels/TableYPanel.jsx';
+import TableZPanel from './panels/TableZPanel.jsx';
 import CellPluginPanel from './panels/CellPluginPanel.jsx';
 import {
   IconShirtFilled,
@@ -23,7 +24,14 @@ import {
   IconRowInsertBottom,
   IconColumnInsertRight,
   IconSquare,
-  IconTableColumn
+  IconTableColumn,
+  IconTableDashed,
+  IconLayoutSidebarFilled,
+  IconLayoutSidebarRightFilled,
+  IconSquareFilled,
+  IconLayoutNavbarFilled,
+  IconLayoutBottombarFilled,
+  IconCrop11Filled
 } from '@tabler/icons-react';
 
 export default function PluginToolbar({
@@ -84,12 +92,12 @@ export default function PluginToolbar({
   const viewModeButtons = [
     {
       id: 'send',
-      icon: <IconPlug size={20} />,
+      icon: <IconPlug size={24} />,
       title: 'Out'
     },
     {
       id: 'insert',
-      icon: <IconOutlet size={20} />,
+      icon: <IconTableDashed size={24} />,
       title: 'In'
     }
   ];
@@ -103,9 +111,10 @@ export default function PluginToolbar({
   ];
 
   const insertButtons = [
-    { id: 'TABLE', icon: <IconTableColumn size={20} stroke={1.75} />, title: 'Table' },
-    { id: 'ROW', icon: <IconRowInsertBottom size={20} stroke={1.75} />, title: 'Row' },
-    { id: 'COLUMN', icon: <IconColumnInsertRight size={20} stroke={1.75} />, title: 'Column' },
+    { id: 'PAIRS', icon: <IconTableDashed size={18} stroke={1.75} />, label: 'Pairs', title: 'Pair Analysis' },
+    { id: 'TABLE_X', icon: <IconTableDashed size={18} stroke={1.75} />, label: 'Table X', title: 'Table X' },
+    { id: 'TABLE_Y', icon: <IconTableDashed size={18} stroke={1.75} />, label: 'Table Y', title: 'Table Y' },
+    { id: 'TABLE_Z', icon: <IconTableDashed size={18} stroke={1.75} />, label: 'Table Z', title: 'Table Z' },
     { id: 'CELL', icon: <IconSquare size={20} stroke={1.75} />, title: 'Cell' }
   ];
 
@@ -117,6 +126,7 @@ export default function PluginToolbar({
           className={`flex items-center justify-center px-1 py-1 text-xs rounded ${activeTab === button.id ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
           onClick={() => handleTabClick(button.id)}
           title={button.title}
+          
         >
           {button.icon}
         </button>
@@ -125,15 +135,23 @@ export default function PluginToolbar({
   );
 
   const insertControls = (
-    <div className="flex gap-2 items-center">
+    <div className="flex gap-2 justify-center items-center">
       {insertButtons.map(button => (
         <button
           key={button.id}
-          className={`flex items-center justify-center px-1 py-1 text-xs rounded ${activeTab === button.id ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+          className={`flex items-center justify-center px-2 py-2 text-xs rounded ${activeTab === button.id ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
           onClick={() => handleTabClick(button.id)}
           title={button.title}
         >
-          {button.icon}
+          
+          <div className="flex flex-col items-center gap-1">
+            {button.icon}
+            {button.label}
+
+          </div>
+
+
+          
         </button>
       ))}
     </div>
@@ -147,9 +165,10 @@ export default function PluginToolbar({
     'TIME': <TimePluginPanel onPanelStateChange={onPanelStateChange} panelCommand={onPanelCommand} />,
     'ELEMENT': <ElementPluginPanel onPanelStateChange={onPanelStateChange} panelCommand={onPanelCommand} />,
     'TREND': <TrendPluginPanel onPanelStateChange={onPanelStateChange} panelCommand={onPanelCommand} />,
-    'TABLE': <TablePluginPanel onPanelStateChange={onPanelStateChange} panelCommand={onPanelCommand} />,
-    'ROW': <RowPluginPanel onPanelStateChange={onPanelStateChange} panelCommand={onPanelCommand} />,
-    'COLUMN': <ColumnPluginPanel onPanelStateChange={onPanelStateChange} panelCommand={onPanelCommand} />,
+    'PAIRS': <PairAnalysisPluginPanel onPanelStateChange={onPanelStateChange} panelCommand={onPanelCommand} />,
+    'TABLE_X': <TableXPanel onPanelStateChange={onPanelStateChange} panelCommand={onPanelCommand} />,
+    'TABLE_Y': <TableYPanel onPanelStateChange={onPanelStateChange} panelCommand={onPanelCommand} />,
+    'TABLE_Z': <TableZPanel onPanelStateChange={onPanelStateChange} panelCommand={onPanelCommand} />,
     'CELL': <CellPluginPanel onPanelStateChange={onPanelStateChange} panelCommand={onPanelCommand} />
   };
 

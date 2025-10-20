@@ -30,7 +30,8 @@ export default function ChA2({
       styles={styles}
       pluginData={cellState[cellKey]}
       onUpdate={(data) => onCellStateUpdate(cellKey, data)}
-      alwaysShowToolbar={true}
+      alwaysShowToolbar={false}
+      disableToolbar={true}
       tableContext={tableContext}
       toolbarLeftContent={
         <div className="absolute left-0 top-0 right-0 h-6 ">
